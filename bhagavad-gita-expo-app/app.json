@@ -1,0 +1,116 @@
+{
+  "expo": {
+    "name": "Bhagavad Gita",
+    "slug": "bhagavad-gita-expo-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "bhagavad-gita",
+    "description": "Sacred verses from the Bhagavad Gita with daily wisdom, chapter browsing, and personal favorites. Experience timeless spiritual teachings with Sanskrit text, translations, and commentary in a beautiful mobile interface.",
+    "keywords": [
+      "bhagavad gita",
+      "sanskrit",
+      "spiritual",
+      "hinduism",
+      "philosophy",
+      "meditation",
+      "wisdom",
+      "verses",
+      "shlokas"
+    ],
+    "primaryColor": "#f97316",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f97316"
+    },
+    "assetBundlePatterns": ["assets/**/*", "src/data/**/*"],
+    "jsEngine": "hermes",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bhagavadgita.app",
+      "buildNumber": "1.0.0",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "UIBackgroundModes": ["background-processing"],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        },
+        "CFBundleDisplayName": "Bhagavad Gita",
+        "CFBundleName": "Bhagavad Gita",
+        "UIRequiredDeviceCapabilities": ["armv7"],
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      },
+      "appStoreUrl": "https://apps.apple.com/app/bhagavad-gita/id123456789"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f97316"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bhagavadgita.app",
+      "versionCode": 1,
+      "permissions": [],
+      "proguardEnabled": true,
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.bhagavadgita.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "bhagavad-gita"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "Bhagavad Gita",
+      "shortName": "Gita",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#f97316",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "startUrl": "/"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f97316",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+module.exports = {
+  root: true,
+  extends: ['eslint:recommended'],
+  parserOptions: {
+    ecmaVersion: 2020,
+    sourceType: 'module',
+  },
+  rules: {
+    'no-duplicate-imports': 'error',
+    'no-redeclare': 'error',
+    'no-unused-vars': 'error',
+    'no-undef': 'error',
+    semi: 'error',
+    quotes: ['error', 'single'],
+  },
+  env: {
+    es6: true,
+    node: true,
+    browser: true,
+  },
+  ignorePatterns: [
+    'node_modules/',
+    '.expo/',
+    'dist/',
+    'web-build/',
+    '*.config.js',
+    '**/__tests__/**',
+    '**/*.test.ts',
+    '**/*.test.tsx',
+    'src/**/*.ts',
+    'src/**/*.tsx',
+    'app/**/*.ts',
+    'app/**/*.tsx',
+    'App.tsx',
+    'scripts/**/*.js',
+  ],
+};
