@@ -32,6 +32,11 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+
+# CI/CD
+coverage/
+.nyc_output/
 
 # typescript
 *.tsbuildinfo

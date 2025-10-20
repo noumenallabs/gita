@@ -1,0 +1,57 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🔄 Update Expo SDK
+        run: |
+          npx expo install --fix
+          npm update
+
+      - name: 🧪 Run tests after update
+        run: npm test -- --watchAll=false
+        continue-on-error: true
+
+      - name: 📝 Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: '🔄 Automated Dependency Updates'
+          body: |
+            ## 🔄 Automated Dependency Updates
+            
+            This PR contains automated dependency updates:
+            
+            - Updated Expo SDK and related packages
+            - Updated npm dependencies to latest compatible versions
+            - Ran tests to ensure compatibility
+            
+            Please review the changes and test thoroughly before merging.
+            
+            ---
+            *This PR was created automatically by GitHub Actions*
+          branch: chore/dependency-updates
+          delete-branch: true

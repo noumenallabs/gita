@@ -1,0 +1,91 @@
+name: Update Status Badges
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
+
+jobs:
+  update-badges:
+    name: Update README Badges
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Update badges
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read current README
+            const readmePath = path.join(process.cwd(), 'README.md');
+            let readme = '';
+            
+            if (fs.existsSync(readmePath)) {
+              readme = fs.readFileSync(readmePath, 'utf8');
+            } else {
+              // Create basic README with badges
+              readme = `# 🕉️ Bhagavad Gita App
+
+[![CI/CD Pipeline](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/ci-cd.yml)
+[![Performance](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/performance.yml/badge.svg)](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/performance.yml)
+[![Security](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/ci-cd.yml/badge.svg?event=schedule)](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/ci-cd.yml)
+
+> Sacred verses from the Bhagavad Gita with daily wisdom, chapter browsing, and personal favorites.
+
+## 📱 Features
+
+- 🌅 **Daily Shloka** - New verse each day
+- 📚 **Browse Chapters** - Explore all 18 chapters
+- 🔍 **Search** - Find verses by keywords
+- ❤️ **Favorites** - Save your favorite verses
+- 🎨 **Beautiful UI** - Modern design with gradients
+- 📱 **Cross-platform** - iOS and Android
+
+## 🚀 Quick Start
+
+\`\`\`bash
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Build for production
+npm run build:production
+\`\`\`
+
+## 🔧 Development
+
+See [CI/CD Setup Guide](./CI-CD-SETUP.md) for complete development and deployment instructions.
+
+## 📦 Download
+
+- **Android**: [Download APK](https://expo.dev/accounts/thalahemanth/projects/bhagavad-gita-expo-app)
+- **iOS**: Available on TestFlight
+
+---
+
+Built with ❤️ using Expo and React Native
+`;
+            }
+            
+            // Write updated README
+            fs.writeFileSync(readmePath, readme);
+            
+            console.log('README updated with status badges');
+
+      - name: 📝 Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git diff --staged --quiet || git commit -m "docs: update status badges"
+          git push

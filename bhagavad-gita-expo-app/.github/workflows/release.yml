@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          # Simple changelog generation
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s" HEAD)
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## 🎉 What's New
+            
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## 📱 Download
+            
+            - **Android APK**: Available after build completion
+            - **iOS IPA**: Available on TestFlight
+            
+            ## 🔗 Links
+            
+            - [Expo Project](https://expo.dev/accounts/thalahemanth/projects/bhagavad-gita-expo-app)
+            - [Build Logs](https://expo.dev/accounts/thalahemanth/projects/bhagavad-gita-expo-app/builds)
+            
+            ---
+            
+            Built with ❤️ using Expo and React Native
+          draft: false
+          prerelease: false
+
+  build-and-submit:
+    name: Build & Submit
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🚀 Build for production
+        run: eas build --platform all --profile production --non-interactive
+
+      - name: 📱 Submit to stores
+        run: |
+          # Build APK for Samsung Galaxy Store (manual submission required)
+          eas build --platform android --profile production --non-interactive || true
+          echo "APK built for Samsung Galaxy Store - manual submission required"

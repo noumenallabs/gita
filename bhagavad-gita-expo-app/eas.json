@@ -1,11 +1,15 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "NODE_ENV": "development"
+      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -16,6 +20,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "NODE_ENV": "staging"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "simulator": true
@@ -26,13 +33,28 @@
       }
     },
     "production": {
+      "env": {
+        "NODE_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
       },
       "android": {
         "autoIncrement": "versionCode",
-        "buildType": "aab"
+        "buildType": "apk"
+      }
+    },
+    "samsung-store": {
+      "extends": "production",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_STORE_TARGET": "samsung"
+      },
+      "android": {
+        "autoIncrement": "versionCode",
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     }
   },

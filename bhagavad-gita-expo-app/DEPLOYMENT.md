@@ -1,257 +1,111 @@
-# Deployment Guide
+# 🚀 Deployment Guide
 
-## Prerequisites
+## Quick Deployment Commands
 
-### Development Environment
-
-- Node.js 18+ installed
-- Expo CLI installed globally: `npm install -g @expo/cli`
-- EAS CLI installed globally: `npm install -g eas-cli`
-
-### Accounts Required
-
-- Expo account (free tier sufficient for development)
-- Apple Developer Account ($99/year for iOS App Store)
-- Google Play Console Account ($25 one-time fee for Android)
-
-## Initial Setup
-
-### 1. Install Dependencies
-
+### 🔧 Setup
 ```bash
-cd bhagavad-gita-expo-app
-npm install
+# First time setup
+npm run ci:setup
+npm run ci:test
 ```
 
-### 2. Configure EAS
-
+### 🏗️ Build Commands
 ```bash
-# Login to Expo
-eas login
+# Development build (for testing)
+npm run ci:build:dev
 
-# Configure the project
-eas build:configure
+# Preview build (for staging)
+npm run ci:build:preview  
+
+# Production build (for app stores)
+npm run ci:build:prod
+
+# Samsung Galaxy Store build
+npm run ci:build:samsung
 ```
 
-### 3. Update Project ID
-
-Update the `extra.eas.projectId` in `app.json` with your actual project ID from Expo dashboard.
-
-## Development Builds
-
-### Local Development
-
+### 📱 Release Commands
 ```bash
-# Start development server
-npm start
+# Patch release (1.0.0 → 1.0.1)
+npm run release:patch
 
-# Run on iOS simulator
-npm run ios
+# Minor release (1.0.0 → 1.1.0)
+npm run release:minor
 
-# Run on Android emulator
-npm run android
+# Major release (1.0.0 → 2.0.0)
+npm run release:major
 ```
 
-### Development Builds (Physical Devices)
-
+### 🔄 Update Deployment
 ```bash
-# Build development client for iOS
-eas build --profile development --platform ios
+# Deploy over-the-air update
+npm run ci:update
 
-# Build development client for Android
-eas build --profile development --platform android
+# Build APK for Samsung Galaxy Store (manual upload required)
+npm run ci:build:samsung
 ```
 
-## Testing Builds
+## 📋 Pre-Deployment Checklist
 
-### Preview Builds
+- [ ] All tests passing (`npm run ci:test`)
+- [ ] No linting errors (`npm run lint`)
+- [ ] No TypeScript errors (`npm run type-check`)
+- [ ] App tested on both iOS and Android
+- [ ] Version number updated in `package.json`
+- [ ] Changelog updated
+- [ ] Environment variables configured
 
-```bash
-# Build preview for both platforms
-npm run build:preview
+## 🔑 Required Secrets
 
-# Build preview for specific platform
-eas build --profile preview --platform ios
-eas build --profile preview --platform android
+Add these to GitHub repository secrets:
+
+```
+EXPO_TOKEN=your_expo_access_token
+APPLE_ID=your_apple_id@example.com (optional, for iOS)
+APPLE_APP_SPECIFIC_PASSWORD=your_password (optional, for iOS)
 ```
 
-## Production Builds
+**Note**: Samsung Galaxy Store requires manual APK upload.
 
-### iOS Production Build
+## 🌍 Environments
 
+| Environment | Branch | Trigger | Purpose |
+|-------------|--------|---------|---------|
+| Development | `develop` | Push | Testing & development |
+| Preview | `main` | Pull Request | Staging & QA |
+| Production | `main` | Tag push | App store release |
+
+## 📊 Monitoring
+
+- **Build Status**: [GitHub Actions](../../actions)
+- **App Builds**: [Expo Dashboard](https://expo.dev/accounts/thalahemanth/projects/bhagavad-gita-expo-app)
+- **Performance**: Automated bundle analysis in CI
+
+## 🚨 Emergency Procedures
+
+### Rollback Release
 ```bash
-# Build for iOS App Store
-npm run build:ios
+# Revert to previous version
+git revert HEAD
+git push origin main
 
-# Or using EAS directly
-eas build --profile production --platform ios
+# Or rollback via Expo
+eas update --branch production --message "Rollback to stable version"
 ```
 
-### Android Production Build
-
+### Hotfix Deployment
 ```bash
-# Build for Google Play Store
-npm run build:android
+# Create hotfix branch
+git checkout -b hotfix/critical-fix
 
-# Or using EAS directly
-eas build --profile production --platform android
+# Make changes and test
+npm run ci:test
+
+# Deploy immediately
+git tag v1.0.1-hotfix
+git push origin v1.0.1-hotfix
 ```
 
-## App Store Submission
+---
 
-### iOS App Store
-
-1. **Prepare App Store Connect**
-   - Create app in App Store Connect
-   - Configure app information, pricing, and availability
-   - Upload screenshots and app preview videos
-   - Set up App Store description and keywords
-
-2. **Submit Build**
-
-   ```bash
-   # Submit to App Store
-   npm run submit:ios
-   ```
-
-3. **Review Process**
-   - Apple review typically takes 24-48 hours
-   - Address any review feedback promptly
-   - Monitor App Store Connect for status updates
-
-### Google Play Store
-
-1. **Prepare Play Console**
-   - Create app in Google Play Console
-   - Configure store listing with descriptions and screenshots
-   - Set up content rating and target audience
-   - Configure pricing and distribution
-
-2. **Submit Build**
-
-   ```bash
-   # Submit to Google Play
-   npm run submit:android
-   ```
-
-3. **Review Process**
-   - Google review typically takes 1-3 days
-   - Monitor Play Console for review status
-   - Address any policy violations promptly
-
-## Over-the-Air Updates
-
-### Publishing Updates
-
-```bash
-# Publish OTA update
-npm run update
-
-# Publish to specific channel
-eas update --channel production --message "Bug fixes and improvements"
-```
-
-### Update Channels
-
-- **development**: For internal testing
-- **preview**: For beta testing
-- **production**: For live app users
-
-## Build Monitoring
-
-### Check Build Status
-
-```bash
-# List recent builds
-eas build:list
-
-# View specific build
-eas build:view [build-id]
-```
-
-### Build Logs
-
-- Access detailed build logs in Expo dashboard
-- Monitor for build failures and optimization opportunities
-- Review bundle size and performance metrics
-
-## Troubleshooting
-
-### Common Issues
-
-#### iOS Build Failures
-
-- **Certificate Issues**: Ensure Apple Developer account is properly configured
-- **Provisioning Profiles**: Verify bundle identifier matches App Store Connect
-- **Capabilities**: Check if required capabilities are enabled
-
-#### Android Build Failures
-
-- **Keystore Issues**: Ensure Android keystore is properly configured
-- **Package Name**: Verify package name is unique and properly formatted
-- **Permissions**: Check if required permissions are declared
-
-#### General Build Issues
-
-- **Dependencies**: Ensure all dependencies are compatible with Expo SDK
-- **Asset Issues**: Verify all assets are properly referenced and sized
-- **Memory Issues**: Monitor build memory usage for large apps
-
-### Getting Help
-
-- Expo Documentation: https://docs.expo.dev/
-- Expo Forums: https://forums.expo.dev/
-- Discord Community: https://chat.expo.dev/
-
-## Security Considerations
-
-### Code Signing
-
-- iOS: Automatic code signing via EAS
-- Android: App signing by Google Play (recommended)
-
-### Secrets Management
-
-- Store sensitive keys in EAS Secrets
-- Never commit credentials to version control
-- Use environment-specific configurations
-
-### Privacy Compliance
-
-- No data collection in this app
-- All data stored locally on device
-- Privacy policy reflects actual data practices
-
-## Performance Optimization
-
-### Bundle Size
-
-- Monitor bundle size in build reports
-- Use dynamic imports for large dependencies
-- Optimize images and assets
-
-### Runtime Performance
-
-- Test on low-end devices
-- Monitor memory usage
-- Optimize list rendering with FlatList
-
-## Maintenance
-
-### Regular Updates
-
-- Keep Expo SDK updated to latest stable version
-- Update dependencies regularly for security patches
-- Monitor for deprecated APIs and features
-
-### Monitoring
-
-- Set up crash reporting
-- Monitor app store reviews and ratings
-- Track key performance metrics
-
-### Backup Strategy
-
-- Regular code backups in version control
-- Export app configurations
-- Document deployment procedures
+For detailed setup instructions, see [CI-CD-SETUP.md](./CI-CD-SETUP.md)

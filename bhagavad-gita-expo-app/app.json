@@ -26,7 +26,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#f97316"
     },
-    "assetBundlePatterns": ["assets/**/*", "src/data/**/*"],
+    "assetBundlePatterns": [
+      "assets/**/*",
+      "src/data/**/*"
+    ],
     "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
@@ -36,13 +39,17 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "UIBackgroundModes": ["background-processing"],
+        "UIBackgroundModes": [
+          "background-processing"
+        ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false
         },
         "CFBundleDisplayName": "Bhagavad Gita",
         "CFBundleName": "Bhagavad Gita",
-        "UIRequiredDeviceCapabilities": ["armv7"],
+        "UIRequiredDeviceCapabilities": [
+          "armv7"
+        ],
         "UISupportedInterfaceOrientations": [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationPortraitUpsideDown"
@@ -76,7 +83,10 @@
               "scheme": "bhagavad-gita"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -109,8 +119,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
-      }
-    }
+        "projectId": "b845b17f-2a50-4024-a5c6-b3e005ddbfdb"
+      },
+      "router": {}
+    },
+    "owner": "thalahemanth"
   }
 }
