@@ -1,3 +1,16 @@
+export interface Commentary {
+  authorKey: string;
+  author: string;
+  displayName: string;
+  translations: {
+    english?: string;
+    hindi?: string;
+    englishCommentary?: string;
+    hindiCommentary?: string;
+    sanskritCommentary?: string;
+  };
+}
+
 export interface Shloka {
   id: string;
   chapter: number;
@@ -6,9 +19,11 @@ export interface Shloka {
   transliteration: string;
   translations: {
     english: string;
+    hindi?: string;
     wordByWord: string;
     commentary: string;
   };
+  commentaries?: Commentary[];
 }
 
 export interface Chapter {

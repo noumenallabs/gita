@@ -1,22 +1,15 @@
-// Re-export all data and types
+// Legacy data exports - kept for backward compatibility
 export { chapters, shlokas } from './gita-data';
 export type { Shloka, Chapter } from './gita-data';
 
-// New complete dataset (719 slokas with full commentaries)
-export {
-  chapters as completeChapters,
-  slokas as completeSlokas,
-  legacySlokas,
-  stats,
-  getChapter,
-  getSlokasByChapter,
-  getShloka,
-  getShlokaById,
-  searchSlokas,
-  getRandomShloka,
-  getDailyShloka,
-} from './gita-complete';
+// Note: The complete dataset (gita-complete.ts) has been moved to assets/data/
+// Use the new data hooks from '../hooks/useGitaData' instead:
+// - useChapters() - Load chapter metadata
+// - useShlokas(chapterNumber) - Load shlokas for a specific chapter
+// - useSearchShlokas(query) - Search shlokas
+// - useDailyShloka() - Get daily shloka
 
+// Type exports
 export type {
   Chapter as CompleteChapter,
   Shloka as CompleteShloka,

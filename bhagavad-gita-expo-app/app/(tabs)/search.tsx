@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { completeSlokas as shlokas, searchSlokas } from '../../src/data';
+import { useSearchVerses } from '../../src/hooks/useGitaData';
+import { SkeletonVerseCard } from '../../src/components/Skeleton';
 import { MicroInteractions, createAnimatedValue } from '../../src/utils/animations';
 import { GitaLogo } from '../../src/components/GitaLogo';
 import { useFavorites } from '../../src/hooks/useFavorites';
@@ -22,6 +23,7 @@ import { useFavorites } from '../../src/hooks/useFavorites';
 export default function SearchScreen() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedTranslation, setSelectedTranslation] = useState<
     'english' | 'wordByWord' | 'commentary'
   >('english');
@@ -29,35 +31,22 @@ export default function SearchScreen() {
 
   const popularSearches = ['karma', 'dharma', 'yoga', 'soul', 'action', 'duty'];
 
-  // Animation values
   const [searchButtonScales] = useState(
     () => new Map(popularSearches.map(term => [term, createAnimatedValue(1)]))
   );
-  const [favoriteScales] = useState(
-    () => new Map(shlokas.map(shloka => [shloka.id, createAnimatedValue(1)]))
-  );
+  const [favoriteScales] = useState(() => new Map());
   const [clearButtonScale] = useState(createAnimatedValue(1));
 
-  // Filter shlokas based on search query using the enhanced search function
-  const filteredShlokas = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return [];
-    }
-    return searchSlokas(searchQuery);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
-
-
-  const getTranslationText = (shloka: any) => {
-    switch (selectedTranslation) {
-      case 'english':
-        return shloka.translations.english;
-      case 'wordByWord':
-        return shloka.translations.wordByWord;
-      case 'commentary':
-        return shloka.translations.commentary;
-    }
-  };
+  const { data, isLoading, error, refetch } = useSearchVerses(debouncedQuery);
+  const searchResults = data?.results ?? [];
+  const resultCount = data?.count ?? 0;
 
   const translationLabels = {
     english: 'English Translation',
@@ -163,91 +152,117 @@ export default function SearchScreen() {
                   wisdom
                 </Text>
               </View>
-            ) : filteredShlokas.length > 0 ? (
+            ) : isLoading ? (
+              // Loading State
+              <View style={styles.resultsList}>
+                <SkeletonVerseCard />
+                <SkeletonVerseCard />
+                <SkeletonVerseCard />
+              </View>
+            ) : error ? (
+              // Error State
+              <View style={styles.noResults}>
+                <View style={styles.noResultsIcon}>
+                  <Ionicons name="alert-circle" size={32} color="#ef4444" />
+                </View>
+                <Text style={styles.noResultsTitle}>Something went wrong</Text>
+                <Text style={styles.noResultsText}>
+                  Failed to search verses. Please try again.
+                </Text>
+                <Pressable
+                  style={styles.clearSearchButton}
+                  onPress={() => refetch()}
+                >
+                  <Text style={styles.clearSearchButtonText}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : searchResults.length > 0 ? (
               // Results
               <>
                 <View style={styles.resultsHeader}>
                   <View style={styles.resultsDot} />
                   <Text style={styles.resultsCount}>
-                    Found {filteredShlokas.length} shloka{filteredShlokas.length !== 1 ? 's' : ''}
+                    Found {resultCount} shloka{resultCount !== 1 ? 's' : ''}
                   </Text>
                 </View>
 
                 <View style={styles.resultsList}>
-                  {filteredShlokas.map(shloka => (
-                    <View key={shloka.id} style={styles.shlokaCard}>
-                      {/* Shloka Header */}
-                      <LinearGradient
-                        colors={['#f97316', '#f59e0b']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.shlokaHeader}
-                      >
-                        <View style={styles.shlokaHeaderContent}>
-                          <View style={styles.shlokaChapterBadge}>
-                            <Text style={styles.shlokaChapterBadgeText}>
-                              {shloka.chapter}.{shloka.verse}
+                  {searchResults.map(result => {
+                    const verseId = `${result.chapter_number}.${result.verse_number}`;
+                    return (
+                      <View key={verseId} style={styles.shlokaCard}>
+                        {/* Shloka Header */}
+                        <LinearGradient
+                          colors={['#f97316', '#f59e0b']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.shlokaHeader}
+                        >
+                          <View style={styles.shlokaHeaderContent}>
+                            <View style={styles.shlokaChapterBadge}>
+                              <Text style={styles.shlokaChapterBadgeText}>
+                                {result.chapter_number}.{result.verse_number}
+                              </Text>
+                            </View>
+                            <Text style={styles.shlokaChapterText}>
+                              Chapter {result.chapter_number}, Verse {result.verse_number}
                             </Text>
                           </View>
-                          <Text style={styles.shlokaChapterText}>
-                            Chapter {shloka.chapter}, Verse {shloka.verse}
-                          </Text>
-                        </View>
-                        <Animated.View
-                          style={{
-                            transform: [
-                              { scale: favoriteScales.get(shloka.id) || createAnimatedValue(1) },
-                            ],
-                          }}
-                        >
-                          <Pressable
-                            style={styles.favoriteButton}
-                            onPressIn={() => {
-                              const scale = favoriteScales.get(shloka.id);
-                              if (scale) MicroInteractions.favoriteToggle(scale, false).start();
-                            }}
-                            onPress={async () => {
-                              await toggleFavorite(shloka.id);
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          <Animated.View
+                            style={{
+                              transform: [
+                                { scale: favoriteScales.get(verseId) || createAnimatedValue(1) },
+                              ],
                             }}
                           >
-                            <Ionicons
-                              name={isFavorite(shloka.id) ? 'heart' : 'heart-outline'}
-                              size={20}
-                              color="#ffffff"
-                            />
+                            <Pressable
+                              style={styles.favoriteButton}
+                              onPressIn={() => {
+                                const scale = favoriteScales.get(verseId);
+                                if (scale) MicroInteractions.favoriteToggle(scale, false).start();
+                              }}
+                              onPress={async () => {
+                                await toggleFavorite(verseId);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              }}
+                            >
+                              <Ionicons
+                                name={isFavorite(verseId) ? 'heart' : 'heart-outline'}
+                                size={20}
+                                color="#ffffff"
+                              />
+                            </Pressable>
+                          </Animated.View>
+                        </LinearGradient>
+
+                        {/* Sanskrit Section */}
+                        <View style={styles.sanskritSection}>
+                          <View style={styles.sanskritBox}>
+                            <Text style={styles.sanskritText}>{result.slok}</Text>
+                          </View>
+                        </View>
+
+                        {/* Translation Section */}
+                        <View style={styles.translationSection}>
+                          <Pressable
+                            style={styles.translationSelector}
+                            onPress={() => setShowTranslationModal(true)}
+                          >
+                            <Text style={styles.translationSelectorText}>
+                              {translationLabels[selectedTranslation]}
+                            </Text>
+                            <Ionicons name="chevron-down" size={16} color="#6b7280" />
                           </Pressable>
-                        </Animated.View>
-                      </LinearGradient>
 
-                      {/* Sanskrit Section */}
-                      <View style={styles.sanskritSection}>
-                        <View style={styles.sanskritBox}>
-                          <Text style={styles.sanskritText}>{shloka.sanskrit}</Text>
-                        </View>
-                        <View style={styles.transliterationBox}>
-                          <Text style={styles.transliterationText}>{shloka.transliteration}</Text>
+                          <View style={styles.translationContent}>
+                            <Text style={styles.translationText}>
+                              {result.text ?? 'Select a verse to view full translation'}
+                            </Text>
+                          </View>
                         </View>
                       </View>
-
-                      {/* Translation Section */}
-                      <View style={styles.translationSection}>
-                        <Pressable
-                          style={styles.translationSelector}
-                          onPress={() => setShowTranslationModal(true)}
-                        >
-                          <Text style={styles.translationSelectorText}>
-                            {translationLabels[selectedTranslation]}
-                          </Text>
-                          <Ionicons name="chevron-down" size={16} color="#6b7280" />
-                        </Pressable>
-
-                        <View style={styles.translationContent}>
-                          <Text style={styles.translationText}>{getTranslationText(shloka)}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               </>
             ) : (

@@ -1,4 +1,4 @@
-import { Dimensions, PixelRatio, Platform } from 'react-native';
+import { Dimensions, PixelRatio } from 'react-native';
 
 // Get device dimensions
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -100,8 +100,8 @@ export const getLayoutDimensions = () => {
     maxContentWidth:
       deviceType === DeviceType.PHONE ? SCREEN_WIDTH : Math.min(SCREEN_WIDTH * 0.8, 800),
     columnCount: deviceType === DeviceType.PHONE ? 1 : deviceType === DeviceType.TABLET ? 2 : 3,
-    headerHeight: Platform.OS === 'ios' ? (isTablet() ? 88 : 56) : isTablet() ? 72 : 56,
-    tabBarHeight: Platform.OS === 'ios' ? (isTablet() ? 88 : 68) : isTablet() ? 72 : 68,
+    headerHeight: process.env.EXPO_OS === 'ios' ? (isTablet() ? 88 : 56) : isTablet() ? 72 : 56,
+    tabBarHeight: process.env.EXPO_OS === 'ios' ? (isTablet() ? 88 : 68) : isTablet() ? 72 : 68,
   };
 };
 
@@ -119,8 +119,8 @@ export const getSafeAreaPadding = () => {
   const deviceType = getDeviceType();
 
   return {
-    top: Platform.OS === 'ios' ? (deviceType === DeviceType.PHONE ? 44 : 24) : 24,
-    bottom: Platform.OS === 'ios' ? (deviceType === DeviceType.PHONE ? 34 : 0) : 0,
+    top: process.env.EXPO_OS === 'ios' ? (deviceType === DeviceType.PHONE ? 44 : 24) : 24,
+    bottom: process.env.EXPO_OS === 'ios' ? (deviceType === DeviceType.PHONE ? 34 : 0) : 0,
     horizontal: getSpacing(16),
   };
 };

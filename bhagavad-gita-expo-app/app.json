@@ -27,8 +27,7 @@
       "backgroundColor": "#f97316"
     },
     "assetBundlePatterns": [
-      "assets/**/*",
-      "src/data/**/*"
+      "assets/*.png"
     ],
     "jsEngine": "hermes",
     "ios": {

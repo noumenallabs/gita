@@ -1,31 +1,27 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { AppHeader } from '../../src/components/AppHeader';
 import { ShlokaCard } from '../../src/components/ShlokaCard';
-import { getChapter, getSlokasByChapter } from '../../src/data';
-import { Chapter, Shloka } from '../../src/data/types';
+import { useChapter } from '../../src/hooks/useGitaData';
+import { useRecordProgress } from '../../src/hooks/useStreak';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import { SkeletonVerseCard } from '../../src/components/Skeleton';
 import { Colors, Gradients } from '../../src/constants/theme';
 import { useAppContext } from '../../src/context/AppContext';
+import type { Shloka } from '../../src/types';
 
-export default function ChapterDetailScreen() {
+function ChapterDetailContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { state, actions } = useAppContext();
 
-  // Find the chapter data
-  const chapter: Chapter | undefined = useMemo(() => {
-    const chapterNumber = parseInt(id as string, 10);
-    return getChapter(chapterNumber);
-  }, [id]);
-
-  // Find shlokas for this chapter
-  const chapterShlokas: Shloka[] = useMemo(() => {
-    const chapterNumber = parseInt(id as string, 10);
-    return getSlokasByChapter(chapterNumber);
-  }, [id]);
+  const chapterNumber = parseInt(id as string, 10);
+  const { data: chapter, isLoading, isError, refetch } = useChapter(chapterNumber);
+  const recordProgress = useRecordProgress();
 
   const handleBackPress = () => {
     router.back();
@@ -35,8 +31,33 @@ export default function ChapterDetailScreen() {
     actions.toggleFavorite(shlokaId);
   };
 
-  // Handle invalid chapter ID
-  if (!chapter) {
+  const handleVerseView = (shloka: Shloka) => {
+    recordProgress.mutate({
+      chapterNumber: shloka.chapter,
+      verseNumber: shloka.verse,
+      status: 'read',
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <AppHeader
+          title={`Chapter ${chapterNumber}`}
+          showBackButton={true}
+          onBackPress={handleBackPress}
+          showLogo={true}
+          showBookBadge={true}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary?.[500] ?? '#f97316'} />
+          <Text style={styles.loadingText}>Loading chapter...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !chapter) {
     return (
       <SafeAreaView style={styles.container}>
         <AppHeader
@@ -47,12 +68,18 @@ export default function ChapterDetailScreen() {
           showBookBadge={true}
         />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Chapter Not Found</Text>
-          <Text style={styles.errorSubtitle}>The requested chapter could not be found.</Text>
+          <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={styles.errorTitle}>Failed to Load Chapter</Text>
+          <Text style={styles.errorSubtitle}>Please check your connection and try again.</Text>
+          <Pressable style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
   }
+
+  const chapterShlokas = chapter.verses ?? [];
 
   const renderShloka = ({ item }: { item: Shloka }) => (
     <View style={styles.shlokaContainer}>
@@ -67,10 +94,9 @@ export default function ChapterDetailScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
-      <Text style={styles.emptyStateTitle}>Complete Chapter Available</Text>
+      <Text style={styles.emptyStateTitle}>No Verses Available</Text>
       <Text style={styles.emptyStateSubtitle}>
-        This chapter contains {chapter.verses} verses. All verses are now available in the complete
-        collection.
+        This chapter contains {chapter.verseCount} verses. They will appear here once loaded.
       </Text>
     </View>
   );
@@ -102,18 +128,20 @@ export default function ChapterDetailScreen() {
               <Text style={styles.chapterName}>{chapter.name}</Text>
               <Text style={styles.chapterTranslation}>{chapter.translation}</Text>
               <View style={styles.chapterStats}>
-                <Text style={styles.versesCount}>{chapter.verses} verses</Text>
+                <Text style={styles.versesCount}>{chapter.verseCount} verses</Text>
                 <Text style={styles.availableShlokas}>
-                  {chapterShlokas.length} verse{chapterShlokas.length !== 1 ? 's' : ''} available
+                  {chapterShlokas.length} verse{chapterShlokas.length !== 1 ? 's' : ''} loaded
                 </Text>
               </View>
             </LinearGradient>
 
             {/* Chapter Summary */}
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryTitle}>Summary</Text>
-              <Text style={styles.summaryText}>{chapter.summary.en}</Text>
-            </View>
+            {chapter.summary ? (
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryTitle}>Summary</Text>
+                <Text style={styles.summaryText}>{chapter.summary}</Text>
+              </View>
+            ) : null}
 
             {/* Shlokas Section Header */}
             {chapterShlokas.length > 0 && (
@@ -131,6 +159,14 @@ export default function ChapterDetailScreen() {
   );
 }
 
+export default function ChapterDetailScreen() {
+  return (
+    <ErrorBoundary>
+      <ChapterDetailContent />
+    </ErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -138,6 +174,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6b7280',
   },
   chapterHeader: {
     margin: 16,
@@ -248,17 +294,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    gap: 12,
   },
   errorTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.primary[500],
+    color: '#ef4444',
     textAlign: 'center',
-    marginBottom: 12,
   },
   errorSubtitle: {
     fontSize: 16,
-    color: Colors.gray[600],
+    color: '#6b7280',
     textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#f97316',
+    marginTop: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

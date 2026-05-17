@@ -2,45 +2,34 @@
  * Text rendering optimization utilities for Sanskrit and multilingual content
  */
 
-import { Platform } from 'react-native';
-
-export interface TextRenderingConfig {
-  includeFontPadding?: boolean;
-  textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
-  allowFontScaling?: boolean;
-  maxFontSizeMultiplier?: number;
-  adjustsFontSizeToFit?: boolean;
-  minimumFontScale?: number;
-}
-
 /**
  * Get optimized text rendering props for Sanskrit text
  */
-export const getSanskritTextProps = (): TextRenderingConfig => ({
+export const getSanskritTextProps = () => ({
   includeFontPadding: false, // Reduces extra padding on Android
   textAlignVertical: 'center',
   allowFontScaling: true,
   maxFontSizeMultiplier: 1.3, // Limit scaling for readability
-  adjustsFontSizeToFit: Platform.OS === 'ios',
+  adjustsFontSizeToFit: process.env.EXPO_OS === 'ios',
   minimumFontScale: 0.8,
 });
 
 /**
  * Get optimized text rendering props for transliteration text
  */
-export const getTransliterationTextProps = (): TextRenderingConfig => ({
+export const getTransliterationTextProps = () => ({
   includeFontPadding: false,
   textAlignVertical: 'center',
   allowFontScaling: true,
   maxFontSizeMultiplier: 1.2,
-  adjustsFontSizeToFit: Platform.OS === 'ios',
+  adjustsFontSizeToFit: process.env.EXPO_OS === 'ios',
   minimumFontScale: 0.9,
 });
 
 /**
  * Get optimized text rendering props for translation text
  */
-export const getTranslationTextProps = (): TextRenderingConfig => ({
+export const getTranslationTextProps = () => ({
   includeFontPadding: false,
   allowFontScaling: true,
   maxFontSizeMultiplier: 1.5, // Allow more scaling for accessibility
@@ -68,7 +57,7 @@ export const containsSanskrit = (text: string): boolean => {
  * Get font family for Sanskrit text based on platform
  */
 export const getSanskritFontFamily = (): string => {
-  if (Platform.OS === 'ios') {
+  if (process.env.EXPO_OS === 'ios') {
     return 'Kohinoor Devanagari'; // iOS system font for Devanagari
   } else {
     return 'Noto Sans Devanagari'; // Android system font for Devanagari

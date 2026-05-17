@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, ViewStyle, TextStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useResponsive, useDeviceInfo } from '../context/ResponsiveContext';
 import { getAccessibilityProps } from '../utils/accessibility';

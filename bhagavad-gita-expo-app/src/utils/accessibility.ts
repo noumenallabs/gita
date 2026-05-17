@@ -1,4 +1,4 @@
-import { AccessibilityInfo, Platform } from 'react-native';
+import { AccessibilityInfo } from 'react-native';
 
 // Font size preferences
 export const FontSizePreference = {
@@ -98,7 +98,7 @@ export const getAccessibilityProps = (
   }
 
   if (state) {
-    if (Platform.OS === 'ios') {
+    if (process.env.EXPO_OS === 'ios') {
       const traits = [];
       if (state.selected) traits.push('selected');
       if (state.disabled) traits.push('disabled');

@@ -1,7 +1,7 @@
 import React, { useState, memo, useMemo, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';

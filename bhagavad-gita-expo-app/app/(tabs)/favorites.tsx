@@ -5,49 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Modal,
-  TouchableOpacity,
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { completeSlokas as shlokas } from '../../src/data';
 import { MicroInteractions, createAnimatedValue } from '../../src/utils/animations';
-import { GitaLogo } from '../../src/components/GitaLogo';
 import { useFavorites } from '../../src/hooks/useFavorites';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
-export default function FavoritesScreen() {
-  const { favorites, favoritesCount, toggleFavorite, getFavoriteShlokas, isLoading } = useFavorites();
-  const [selectedTranslation, setSelectedTranslation] = useState<
-    'english' | 'wordByWord' | 'commentary'
-  >('english');
+function FavoritesScreenContent() {
+  const { favorites, favoritesCount, toggleFavorite, isLoading } = useFavorites();
   const [showTranslationModal, setShowTranslationModal] = useState(false);
 
   // Animation values
-  const [favoriteScales] = useState(
-    () => new Map(shlokas.map(shloka => [shloka.id, createAnimatedValue(1)]))
-  );
+  const [favoriteScales] = useState(() => new Map());
 
-  const favoriteShlokas = getFavoriteShlokas(shlokas);
-
-  const getTranslationText = (shloka: any) => {
-    switch (selectedTranslation) {
-      case 'english':
-        return shloka.translations.english;
-      case 'wordByWord':
-        return shloka.translations.wordByWord;
-      case 'commentary':
-        return shloka.translations.commentary;
-    }
-  };
-
-  const translationLabels = {
-    english: 'English Translation',
-    wordByWord: 'Word by Word',
-    commentary: 'Commentary',
-  };
+  const favoriteIds = Array.from(favorites);
 
   return (
     <View style={styles.container}>
@@ -72,96 +47,71 @@ export default function FavoritesScreen() {
                   {favoritesCount} saved shloka{favoritesCount !== 1 ? 's' : ''}
                 </Text>
               </View>
-              {/* Debug button - remove in production */}
-              <Pressable
-                style={styles.debugButton}
-                onPress={async () => {
-                  console.log('=== FAVORITES DEBUG ===');
-                  await DebugUtils.checkAsyncStorage();
-                  await DebugUtils.getStorageStats();
-                  console.log('Favorites from hook:', favorites);
-                  console.log('Favorites count:', favoritesCount);
-                }}
-              >
-                <Text style={styles.debugButtonText}>Debug</Text>
-              </Pressable>
             </View>
           </View>
 
           {/* Content */}
           <View style={styles.favoritesContainer}>
-            {favoriteShlokas.length > 0 ? (
+            {favoriteIds.length > 0 ? (
               <View style={styles.favoritesList}>
-                {favoriteShlokas.map(shloka => (
-                  <View key={shloka.id} style={styles.shlokaCard}>
-                    {/* Shloka Header */}
-                    <LinearGradient
-                      colors={['#f97316', '#f59e0b']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.shlokaHeader}
-                    >
-                      <View style={styles.shlokaHeaderContent}>
-                        <View style={styles.shlokaChapterBadge}>
-                          <Text style={styles.shlokaChapterBadgeText}>
-                            {shloka.chapter}.{shloka.verse}
+                {favoriteIds.map((id) => {
+                  const parts = id.split('.');
+                  const chapter = parts[0] ?? '';
+                  const verse = parts[1] ?? '';
+
+                  return (
+                    <View key={id} style={styles.shlokaCard}>
+                      {/* Shloka Header */}
+                      <LinearGradient
+                        colors={['#f97316', '#f59e0b']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.shlokaHeader}
+                      >
+                        <View style={styles.shlokaHeaderContent}>
+                          <View style={styles.shlokaChapterBadge}>
+                            <Text style={styles.shlokaChapterBadgeText}>
+                              {chapter}.{verse}
+                            </Text>
+                          </View>
+                          <Text style={styles.shlokaChapterText}>
+                            Chapter {chapter}, Verse {verse}
                           </Text>
                         </View>
-                        <Text style={styles.shlokaChapterText}>
-                          Chapter {shloka.chapter}, Verse {shloka.verse}
-                        </Text>
-                      </View>
-                      <Animated.View
-                        style={{
-                          transform: [
-                            { scale: favoriteScales.get(shloka.id) || createAnimatedValue(1) },
-                          ],
-                        }}
-                      >
-                        <Pressable
-                          style={styles.favoriteButton}
-                          onPressIn={() => {
-                            const scale = favoriteScales.get(shloka.id);
-                            if (scale) MicroInteractions.favoriteToggle(scale, false).start();
-                          }}
-                          onPress={async () => {
-                            await toggleFavorite(shloka.id);
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        <Animated.View
+                          style={{
+                            transform: [
+                              { scale: favoriteScales.get(id) || createAnimatedValue(1) },
+                            ],
                           }}
                         >
-                          <Ionicons name="heart" size={20} color="#ffffff" />
-                        </Pressable>
-                      </Animated.View>
-                    </LinearGradient>
+                          <Pressable
+                            style={styles.favoriteButton}
+                            onPressIn={() => {
+                              const scale = favoriteScales.get(id);
+                              if (scale) MicroInteractions.favoriteToggle(scale, false).start();
+                            }}
+                            onPress={async () => {
+                              await toggleFavorite(id);
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            }}
+                          >
+                            <Ionicons name="heart" size={20} color="#ffffff" />
+                          </Pressable>
+                        </Animated.View>
+                      </LinearGradient>
 
-                    {/* Sanskrit Section */}
-                    <View style={styles.sanskritSection}>
-                      <View style={styles.sanskritBox}>
-                        <Text style={styles.sanskritText}>{shloka.sanskrit}</Text>
-                      </View>
-                      <View style={styles.transliterationBox}>
-                        <Text style={styles.transliterationText}>{shloka.transliteration}</Text>
-                      </View>
-                    </View>
-
-                    {/* Translation Section */}
-                    <View style={styles.translationSection}>
-                      <Pressable
-                        style={styles.translationSelector}
-                        onPress={() => setShowTranslationModal(true)}
-                      >
-                        <Text style={styles.translationSelectorText}>
-                          {translationLabels[selectedTranslation]}
-                        </Text>
-                        <Ionicons name="chevron-down" size={16} color="#6b7280" />
-                      </Pressable>
-
-                      <View style={styles.translationContent}>
-                        <Text style={styles.translationText}>{getTranslationText(shloka)}</Text>
+                      {/* Info */}
+                      <View style={styles.sanskritSection}>
+                        <View style={styles.sanskritBox}>
+                          <Text style={styles.sanskritText}>
+                            Tap to view this verse in Chapter {chapter}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             ) : (
               // Empty State
@@ -199,74 +149,12 @@ export default function FavoritesScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Translation Selection Modal */}
-      <Modal
-        visible={showTranslationModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowTranslationModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Translation</Text>
-              <Text style={styles.modalSubtitle}>Choose how you want to read this shloka</Text>
-            </View>
-
-            <View style={styles.translationOptions}>
-              {(Object.keys(translationLabels) as Array<keyof typeof translationLabels>).map(
-                type => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.translationOption,
-                      selectedTranslation === type && styles.translationOptionSelected,
-                    ]}
-                    onPress={() => {
-                      setSelectedTranslation(type);
-                      setShowTranslationModal(false);
-                    }}
-                  >
-                    <View style={styles.translationOptionContent}>
-                      <Text
-                        style={[
-                          styles.translationOptionTitle,
-                          selectedTranslation === type && styles.translationOptionTitleSelected,
-                        ]}
-                      >
-                        {translationLabels[type]}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.translationOptionDescription,
-                          selectedTranslation === type &&
-                            styles.translationOptionDescriptionSelected,
-                        ]}
-                      >
-                        {type === 'english' && 'Complete verse translation'}
-                        {type === 'wordByWord' && 'Detailed word meanings'}
-                        {type === 'commentary' && 'In-depth explanation'}
-                      </Text>
-                    </View>
-                    {selectedTranslation === type && (
-                      <Ionicons name="checkmark" size={20} color="#ffffff" />
-                    )}
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowTranslationModal(false)}
-            >
-              <Text style={styles.modalCloseButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
+}
+
+export default function FavoritesScreen() {
+  return <ErrorBoundary><FavoritesScreenContent /></ErrorBoundary>;
 }
 
 const styles = StyleSheet.create({
@@ -474,95 +362,5 @@ const styles = StyleSheet.create({
   emptyStateHintText: {
     fontSize: 14,
     color: '#374151',
-  },
-  // Modal styles (same as other screens)
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
-    maxHeight: '70%',
-  },
-  modalHeader: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  translationOptions: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  translationOption: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  translationOptionSelected: {
-    backgroundColor: '#f97316',
-    borderColor: '#ea580c',
-  },
-  translationOptionContent: {
-    flex: 1,
-  },
-  translationOptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  translationOptionTitleSelected: {
-    color: '#ffffff',
-  },
-  translationOptionDescription: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  translationOptionDescriptionSelected: {
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  modalCloseButton: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  modalCloseButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  // Debug styles - remove in production
-  debugButton: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  debugButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

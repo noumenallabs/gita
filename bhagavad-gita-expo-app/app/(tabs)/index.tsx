@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { completeSlokas as shlokas, getDailyShloka, stats } from '../../src/data';
+import { useDailyVerse } from '../../src/hooks/useGitaData';
 import { MicroInteractions, createAnimatedValue } from '../../src/utils/animations';
 import { GitaLogo } from '../../src/components/GitaLogo';
 import { useFavorites } from '../../src/hooks/useFavorites';
+import { SkeletonVerseCard } from '../../src/components/Skeleton';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
-export default function HomeScreen() {
-  // Get deterministic shloka based on current date from complete dataset
-  const dailyShloka = useMemo(() => {
-    return getDailyShloka();
-  }, []);
+function HomeScreenContent() {
+  const { data, isLoading, isError, refetch } = useDailyVerse();
+  const dailyShloka = data?.verse;
 
   const { isFavorite: isShlokaFavorite, toggleFavorite } = useFavorites();
 
@@ -34,10 +34,8 @@ export default function HomeScreen() {
   const [showCommentaryModal, setShowCommentaryModal] = useState(false);
   const [showTranslationModal, setShowTranslationModal] = useState(false);
 
-  // Check if daily shloka is favorite
-  const isFavorite = isShlokaFavorite(dailyShloka.id);
+  const isFavorite = dailyShloka ? isShlokaFavorite(dailyShloka.id) : false;
 
-  // Animation values
   const [dailyCardScale] = useState(createAnimatedValue(1));
   const [chapterRefScale] = useState(createAnimatedValue(1));
   const [favoriteScale] = useState(createAnimatedValue(1));
@@ -57,11 +55,12 @@ export default function HomeScreen() {
   };
 
   const getTranslationText = () => {
+    if (!dailyShloka) return '';
     switch (selectedTranslation) {
       case 'english':
         return dailyShloka.translations.english;
       case 'hindi':
-        return dailyShloka.translations.hindi;
+        return (dailyShloka.translations as Record<string, string>).hindi ?? '';
       case 'wordByWord':
         return dailyShloka.translations.wordByWord;
       case 'commentary':
@@ -76,21 +75,114 @@ export default function HomeScreen() {
     commentary: 'Primary Commentary',
   };
 
-  const availableCommentaries = dailyShloka.commentaries.filter(c => 
-    Object.keys(c.translations).length > 0
+  const commentaries = (dailyShloka as Record<string, unknown> | undefined)?.commentaries as
+    | Array<{
+        authorKey: string;
+        displayName: string;
+        translations: Record<string, string>;
+      }>
+    | undefined;
+
+  const availableCommentaries = (commentaries ?? []).filter(
+    (c) => Object.keys(c.translations).length > 0
   );
 
   const getCurrentCommentary = () => {
     if (availableCommentaries.length === 0) return null;
     const commentary = availableCommentaries[selectedCommentary];
-    
-    // Prefer English commentary, then English translation, then Hindi
-    return commentary.translations.englishCommentary || 
-           commentary.translations.english || 
-           commentary.translations.hindiCommentary ||
-           commentary.translations.hindi ||
-           Object.values(commentary.translations)[0];
+
+    return (
+      commentary.translations.englishCommentary ||
+      commentary.translations.english ||
+      commentary.translations.hindiCommentary ||
+      commentary.translations.hindi ||
+      Object.values(commentary.translations)[0]
+    );
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#ea580c', '#f97316', '#f59e0b']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <View style={styles.decorativeBackground}>
+            <View style={[styles.decorativeCircle, styles.decorativeCircle1]} />
+            <View style={[styles.decorativeCircle, styles.decorativeCircle2]} />
+          </View>
+          <SafeAreaView style={styles.headerSafeArea}>
+            <View style={styles.headerContent}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoIcon}>
+                  <GitaLogo size={40} color="#ffffff" />
+                </View>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.headerTitle}>Bhagavad Gita</Text>
+                  <Text style={styles.headerSubtitle}>
+                    Complete Collection • 701 Verses
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+        <View style={styles.content}>
+          <SkeletonVerseCard />
+        </View>
+      </View>
+    );
+  }
+
+  if (isError || !dailyShloka) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#ea580c', '#f97316', '#f59e0b']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <View style={styles.decorativeBackground}>
+            <View style={[styles.decorativeCircle, styles.decorativeCircle1]} />
+            <View style={[styles.decorativeCircle, styles.decorativeCircle2]} />
+          </View>
+          <SafeAreaView style={styles.headerSafeArea}>
+            <View style={styles.headerContent}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoIcon}>
+                  <GitaLogo size={40} color="#ffffff" />
+                </View>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.headerTitle}>Bhagavad Gita</Text>
+                  <Text style={styles.headerSubtitle}>
+                    Complete Collection • 701 Verses
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+        <View style={[styles.content, { justifyContent: 'center', alignItems: 'center', paddingBottom: 80 }]}>
+          <Ionicons name="cloud-offline-outline" size={48} color="#9ca3af" />
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151', marginTop: 16 }}>
+            Could not load today's verse
+          </Text>
+          <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 4, marginBottom: 24 }}>
+            Please check your connection and try again
+          </Text>
+          <Pressable
+            style={{ backgroundColor: '#f97316', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+            onPress={() => refetch()}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '600', fontSize: 16 }}>Retry</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -116,22 +208,9 @@ export default function HomeScreen() {
               <View style={styles.titleContainer}>
                 <Text style={styles.headerTitle}>Bhagavad Gita</Text>
                 <Text style={styles.headerSubtitle}>
-                  Complete Collection • {stats.totalSlokas} Verses
+                  Complete Collection • 701 Verses
                 </Text>
               </View>
-              {/* Debug button - remove in production */}
-              <Pressable
-                style={styles.debugButton}
-                onPress={async () => {
-                  console.log('=== HOME DEBUG ===');
-                  console.log('Daily shloka ID:', dailyShloka.id);
-                  console.log('Is favorite:', isFavorite);
-                  await DebugUtils.checkAsyncStorage();
-                  await DebugUtils.getStorageStats();
-                }}
-              >
-                <Text style={styles.debugButtonText}>Debug</Text>
-              </Pressable>
             </View>
           </View>
         </SafeAreaView>
@@ -175,6 +254,7 @@ export default function HomeScreen() {
                       onPressIn={() => MicroInteractions.buttonPress(refreshScale, false).start()}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        refetch();
                       }}
                     >
                       <Ionicons name="refresh" size={20} color="#ffffff" />
@@ -317,8 +397,8 @@ export default function HomeScreen() {
         {/* Info Card */}
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
-            Experience all {stats.totalSlokas} verses with commentaries from{' '}
-            {stats.totalCommentators} renowned scholars. A new shloka is selected each day from the
+            Experience all 701 verses with commentaries from{' '}
+            22 renowned scholars. A new shloka is selected each day from the
             complete collection.
           </Text>
         </View>
@@ -454,6 +534,14 @@ export default function HomeScreen() {
         </View>
       </Modal>
     </View>
+  );
+}
+
+export default function HomeScreen() {
+  return (
+    <ErrorBoundary>
+      <HomeScreenContent />
+    </ErrorBoundary>
   );
 }
 
@@ -944,18 +1032,5 @@ const styles = StyleSheet.create({
   },
   commentaryOptionDescriptionSelected: {
     color: 'rgba(255, 255, 255, 0.9)',
-  },
-  // Debug styles - remove in production
-  debugButton: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  debugButtonText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '600',
   },
 });

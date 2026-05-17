@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ViewStyle, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { GitaLogo } from './GitaLogo';
 import { ThemeToggle } from './ThemeToggle';
 import { useResponsive, useDeviceInfo } from '../context/ResponsiveContext';

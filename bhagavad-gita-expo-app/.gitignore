@@ -44,3 +44,7 @@ coverage/
 # generated native folders
 /ios
 /android
+
+# large data files (use API instead)
+*.bak
+src/data/gita-complete*

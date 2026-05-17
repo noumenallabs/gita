@@ -12,47 +12,40 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Haptics from 'expo-haptics';
-import {
-  completeChapters as chapters,
-  completeSlokas as shlokas,
-  getSlokasByChapter,
-} from '../../src/data';
+import { useChapters, useChapter } from '../../src/hooks/useGitaData';
+import { SkeletonChapterCard, SkeletonVerseCard } from '../../src/components/Skeleton';
 import { MicroInteractions, createAnimatedValue } from '../../src/utils/animations';
 import { GitaLogo } from '../../src/components/GitaLogo';
 import { useFavorites } from '../../src/hooks/useFavorites';
 
-// Gradient variations for chapters
 const getChapterGradient = (chapterNum: number): readonly [string, string] => {
   const gradients: readonly [string, string][] = [
-    ['#f97316', '#f59e0b'], // orange to amber
-    ['#ea580c', '#d97706'], // darker orange to amber
-    ['#f59e0b', '#f97316'], // amber to orange
+    ['#f97316', '#f59e0b'],
+    ['#ea580c', '#d97706'],
+    ['#f59e0b', '#f97316'],
   ];
   return gradients[(chapterNum - 1) % gradients.length];
 };
 
 export default function BrowseScreen() {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { data: chapters, isLoading: chaptersLoading, isError: chaptersError, refetch: refetchChapters } = useChapters();
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+  const { data: chapterData, isLoading: chapterLoading, isError: chapterError, refetch: refetchChapter } = useChapter(selectedChapter ?? 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTranslation, setSelectedTranslation] = useState<
     'english' | 'wordByWord' | 'commentary'
   >('english');
   const [showTranslationModal, setShowTranslationModal] = useState(false);
 
-  // Animation values for chapter cards
-  const [chapterCardScales] = useState(
-    () => new Map(chapters.map(chapter => [chapter.number, createAnimatedValue(1)]))
-  );
+  const [chapterCardScales] = useState(() => new Map());
   const [backButtonScale] = useState(createAnimatedValue(1));
-  const [favoriteScales] = useState(
-    () => new Map(shlokas.map(shloka => [shloka.id, createAnimatedValue(1)]))
-  );
+  const [favoriteScales] = useState(() => new Map());
 
-  // Filter chapters based on search query
   const filteredChapters = useMemo(() => {
+    if (!chapters) return [];
     if (!searchQuery.trim()) {
       return chapters;
     }
@@ -60,14 +53,13 @@ export default function BrowseScreen() {
       chapter =>
         chapter.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         chapter.translation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        chapter.summary.en.toLowerCase().includes(searchQuery.toLowerCase())
+        chapter.summary.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [chapters, searchQuery]);
 
-  const selectedChapterData = chapters.find(c => c.number === selectedChapter);
-  const chapterShlokas = selectedChapter ? getSlokasByChapter(selectedChapter) : [];
-
-
+  const headerChapter = chapters?.find(c => c.number === selectedChapter);
+  const selectedChapterData = chapterData ?? headerChapter;
+  const chapterShlokas = chapterData?.verses ?? [];
 
   const getTranslationText = (shloka: any) => {
     switch (selectedTranslation) {
@@ -87,12 +79,10 @@ export default function BrowseScreen() {
   };
 
   if (!selectedChapter) {
-    // Chapter List View
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Header Section */}
             <View style={styles.header}>
               <View style={styles.headerTop}>
                 <View style={styles.headerIcon}>
@@ -106,7 +96,6 @@ export default function BrowseScreen() {
                 </View>
               </View>
 
-              {/* Search Bar */}
               <View style={styles.searchContainer}>
                 <Ionicons name="book" size={16} color="#6b7280" style={styles.searchIcon} />
                 <TextInput
@@ -119,89 +108,107 @@ export default function BrowseScreen() {
               </View>
             </View>
 
-            {/* Chapter List */}
             <View style={styles.chapterList}>
-              {filteredChapters.map(chapter => {
-                const gradientColors = getChapterGradient(chapter.number);
-
-                return (
-                  <Animated.View
-                    key={chapter.number}
-                    style={{
-                      transform: [
-                        { scale: chapterCardScales.get(chapter.number) || createAnimatedValue(1) },
-                      ],
-                    }}
+              {chaptersLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonChapterCard key={i} />
+                ))
+              ) : chaptersError ? (
+                <View style={styles.noResults}>
+                  <Ionicons name="warning" size={48} color="#ef4444" />
+                  <Text style={styles.noResultsTitle}>Failed to load chapters</Text>
+                  <Text style={styles.noResultsText}>Check your connection and try again</Text>
+                  <TouchableOpacity
+                    style={{ marginTop: 16, backgroundColor: '#f97316', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+                    onPress={() => refetchChapters()}
                   >
-                    <Pressable
-                      style={styles.chapterCard}
-                      onPressIn={() => {
-                        const scale = chapterCardScales.get(chapter.number);
-                        if (scale) MicroInteractions.buttonPress(scale, false).start();
-                      }}
-                      onPress={() => {
-                        setSelectedChapter(chapter.number);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      }}
-                    >
-                      {/* Gradient top bar */}
-                      <LinearGradient
-                        colors={gradientColors}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.chapterGradientBar}
-                      />
+                    <Text style={{ color: '#ffffff', fontWeight: '600' }}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {filteredChapters.map(chapter => {
+                    const gradientColors = getChapterGradient(chapter.number);
 
-                      <View style={styles.chapterCardContent}>
-                        <View style={styles.chapterCardMain}>
-                          {/* Chapter Number Badge */}
-                          <View style={styles.chapterBadgeContainer}>
-                            <LinearGradient
-                              colors={gradientColors}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 1 }}
-                              style={styles.chapterBadge}
-                            >
-                              <Text style={styles.chapterBadgeNumber}>{chapter.number}</Text>
-                            </LinearGradient>
-                          </View>
+                    if (!chapterCardScales.has(chapter.number)) {
+                      chapterCardScales.set(chapter.number, createAnimatedValue(1));
+                    }
 
-                          {/* Chapter Info */}
-                          <View style={styles.chapterInfo}>
-                            <Text style={styles.chapterName} numberOfLines={1}>
-                              {chapter.name}
-                            </Text>
-                            <Text style={styles.chapterTranslation} numberOfLines={1}>
-                              {chapter.translation}
-                            </Text>
-                            <Text style={styles.chapterSummary} numberOfLines={2}>
-                              {chapter.summary.en}
-                            </Text>
+                    return (
+                      <Animated.View
+                        key={chapter.number}
+                        style={{
+                          transform: [
+                            { scale: chapterCardScales.get(chapter.number) || createAnimatedValue(1) },
+                          ],
+                        }}
+                      >
+                        <Pressable
+                          style={styles.chapterCard}
+                          onPressIn={() => {
+                            const scale = chapterCardScales.get(chapter.number);
+                            if (scale) MicroInteractions.buttonPress(scale, false).start();
+                          }}
+                          onPress={() => {
+                            setSelectedChapter(chapter.number);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          }}
+                        >
+                          <LinearGradient
+                            colors={gradientColors}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.chapterGradientBar}
+                          />
 
-                            {/* Footer Info */}
-                            <View style={styles.chapterFooter}>
-                              <View style={styles.verseCount}>
-                                <View style={styles.dot} />
-                                <Text style={styles.verseCountText}>{chapter.verses} verses</Text>
+                          <View style={styles.chapterCardContent}>
+                            <View style={styles.chapterCardMain}>
+                              <View style={styles.chapterBadgeContainer}>
+                                <LinearGradient
+                                  colors={gradientColors}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 1 }}
+                                  style={styles.chapterBadge}
+                                >
+                                  <Text style={styles.chapterBadgeNumber}>{chapter.number}</Text>
+                                </LinearGradient>
+                              </View>
+
+                              <View style={styles.chapterInfo}>
+                                <Text style={styles.chapterName} numberOfLines={1}>
+                                  {chapter.name}
+                                </Text>
+                                <Text style={styles.chapterTranslation} numberOfLines={1}>
+                                  {chapter.translation}
+                                </Text>
+                                <Text style={styles.chapterSummary} numberOfLines={2}>
+                                  {chapter.summary}
+                                </Text>
+
+                                <View style={styles.chapterFooter}>
+                                  <View style={styles.verseCount}>
+                                    <View style={styles.dot} />
+                                    <Text style={styles.verseCountText}>{chapter.verses} verses</Text>
+                                  </View>
+                                </View>
                               </View>
                             </View>
+
+                            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
                           </View>
-                        </View>
+                        </Pressable>
+                      </Animated.View>
+                    );
+                  })}
 
-                        {/* Arrow */}
-                        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-                      </View>
-                    </Pressable>
-                  </Animated.View>
-                );
-              })}
-
-              {filteredChapters.length === 0 && (
-                <View style={styles.noResults}>
-                  <Ionicons name="book" size={48} color="#9ca3af" />
-                  <Text style={styles.noResultsTitle}>No chapters found</Text>
-                  <Text style={styles.noResultsText}>Try a different search term</Text>
-                </View>
+                  {filteredChapters.length === 0 && (
+                    <View style={styles.noResults}>
+                      <Ionicons name="book" size={48} color="#9ca3af" />
+                      <Text style={styles.noResultsTitle}>No chapters found</Text>
+                      <Text style={styles.noResultsText}>Try a different search term</Text>
+                    </View>
+                  )}
+                </>
               )}
             </View>
           </ScrollView>
@@ -210,12 +217,10 @@ export default function BrowseScreen() {
     );
   }
 
-  // Chapter Detail View
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Back Button and Chapter Header */}
           <View style={styles.chapterDetailHeader}>
             <Animated.View style={{ transform: [{ scale: backButtonScale }] }}>
               <Pressable
@@ -231,66 +236,87 @@ export default function BrowseScreen() {
               </Pressable>
             </Animated.View>
 
-            {/* Chapter Detail Card */}
-            <View style={styles.chapterDetailCard}>
-              <LinearGradient
-                colors={getChapterGradient(selectedChapterData?.number || 1)}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.chapterDetailGradient}
-              >
-                {/* Decorative background */}
-                <View style={styles.chapterDetailDecoration} />
+            {chapterLoading ? (
+              <View style={{ gap: 12 }}>
+                <SkeletonChapterCard />
+                <SkeletonChapterCard />
+              </View>
+            ) : chapterError ? (
+              <View style={styles.noResults}>
+                <Ionicons name="warning" size={48} color="#ef4444" />
+                <Text style={styles.noResultsTitle}>Failed to load chapter</Text>
+                <Text style={styles.noResultsText}>Check your connection and try again</Text>
+                <TouchableOpacity
+                  style={{ marginTop: 16, backgroundColor: '#f97316', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+                  onPress={() => refetchChapter()}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : selectedChapterData ? (
+              <>
+                <View style={styles.chapterDetailCard}>
+                  <LinearGradient
+                    colors={getChapterGradient(selectedChapterData.number)}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.chapterDetailGradient}
+                  >
+                    <View style={styles.chapterDetailDecoration} />
 
-                <View style={styles.chapterDetailContent}>
-                  <View style={styles.chapterDetailTop}>
-                    <View style={styles.chapterDetailBadge}>
-                      <Text style={styles.chapterDetailBadgeText}>
-                        {selectedChapterData?.number}
-                      </Text>
-                    </View>
-                    <View style={styles.chapterDetailInfo}>
-                      <Text style={styles.chapterDetailName}>{selectedChapterData?.name}</Text>
-                      <Text style={styles.chapterDetailTranslation}>
-                        {selectedChapterData?.translation}
-                      </Text>
-                    </View>
-                  </View>
+                    <View style={styles.chapterDetailContent}>
+                      <View style={styles.chapterDetailTop}>
+                        <View style={styles.chapterDetailBadge}>
+                          <Text style={styles.chapterDetailBadgeText}>
+                            {selectedChapterData.number}
+                          </Text>
+                        </View>
+                        <View style={styles.chapterDetailInfo}>
+                          <Text style={styles.chapterDetailName}>{selectedChapterData.name}</Text>
+                          <Text style={styles.chapterDetailTranslation}>
+                            {selectedChapterData.translation}
+                          </Text>
+                        </View>
+                      </View>
 
-                  <View style={styles.chapterDetailSummary}>
-                    <Text style={styles.chapterDetailSummaryText}>
-                      {selectedChapterData?.summary.en}
-                    </Text>
-                  </View>
-
-                  <View style={styles.chapterDetailFooter}>
-                    <View style={styles.chapterDetailStat}>
-                      <View style={styles.chapterDetailDot} />
-                      <Text style={styles.chapterDetailStatText}>
-                        {selectedChapterData?.verses} verses total
-                      </Text>
-                    </View>
-                    {chapterShlokas.length > 0 && (
-                      <View style={styles.chapterDetailStat}>
-                        <View style={[styles.chapterDetailDot, { backgroundColor: '#10b981' }]} />
-                        <Text style={styles.chapterDetailStatText}>
-                          {chapterShlokas.length} verse{chapterShlokas.length !== 1 ? 's' : ''}{' '}
-                          available
+                      <View style={styles.chapterDetailSummary}>
+                        <Text style={styles.chapterDetailSummaryText}>
+                          {selectedChapterData.summary}
                         </Text>
                       </View>
-                    )}
-                  </View>
+
+                      <View style={styles.chapterDetailFooter}>
+                        <View style={styles.chapterDetailStat}>
+                          <View style={styles.chapterDetailDot} />
+                          <Text style={styles.chapterDetailStatText}>
+                            {headerChapter?.verses} verses total
+                          </Text>
+                        </View>
+                        {chapterShlokas.length > 0 && (
+                          <View style={styles.chapterDetailStat}>
+                            <View style={[styles.chapterDetailDot, { backgroundColor: '#10b981' }]} />
+                            <Text style={styles.chapterDetailStatText}>
+                              {chapterShlokas.length} verse{chapterShlokas.length !== 1 ? 's' : ''}{' '}
+                              available
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </LinearGradient>
                 </View>
-              </LinearGradient>
-            </View>
+              </>
+            ) : null}
           </View>
 
-          {/* Shlokas */}
           <View style={styles.shlokasContainer}>
-            {chapterShlokas.length > 0 ? (
+            {chapterLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonVerseCard key={i} />
+              ))
+            ) : chapterShlokas.length > 0 ? (
               chapterShlokas.map(shloka => (
                 <View key={shloka.id} style={styles.shlokaCard}>
-                  {/* Shloka Header */}
                   <LinearGradient
                     colors={['#f97316', '#f59e0b']}
                     start={{ x: 0, y: 0 }}
@@ -334,7 +360,6 @@ export default function BrowseScreen() {
                     </Animated.View>
                   </LinearGradient>
 
-                  {/* Sanskrit Section */}
                   <View style={styles.sanskritSection}>
                     <View style={styles.sanskritBox}>
                       <Text style={styles.sanskritText}>{shloka.sanskrit}</Text>
@@ -344,7 +369,6 @@ export default function BrowseScreen() {
                     </View>
                   </View>
 
-                  {/* Translation Section */}
                   <View style={styles.translationSection}>
                     <Pressable
                       style={styles.translationSelector}
@@ -362,7 +386,7 @@ export default function BrowseScreen() {
                   </View>
                 </View>
               ))
-            ) : (
+            ) : !chapterLoading && !chapterError ? (
               <View style={styles.noShlokas}>
                 <View style={styles.noShlokasIcon}>
                   <LinearGradient
@@ -379,15 +403,14 @@ export default function BrowseScreen() {
                   All verses from this chapter are now available
                 </Text>
                 <Text style={styles.noShlokasSubtext}>
-                  This chapter contains {selectedChapterData?.verses} verses in total
+                  This chapter contains {headerChapter?.verses} verses in total
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
 
-      {/* Translation Selection Modal */}
       <Modal
         visible={showTranslationModal}
         transparent={true}
@@ -653,7 +676,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
   },
-  // Chapter Detail Styles
   chapterDetailHeader: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -910,7 +932,6 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textAlign: 'center',
   },
-  // Modal styles (same as home screen)
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
