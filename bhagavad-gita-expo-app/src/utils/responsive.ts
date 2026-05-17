@@ -162,3 +162,20 @@ export const getTouchTargetSize = (baseSize: number): number => {
   const scaledSize = scale(baseSize);
   return Math.max(scaledSize, minTouchTarget);
 };
+
+// Get value based on device type (used in tests and dynamic sizing)
+export function getResponsiveValue<T>(values: {
+  phone: T;
+  tablet?: T;
+  large_tablet?: T;
+}): T {
+  const deviceType = getDeviceType();
+  if (deviceType === DeviceType.LARGE_TABLET) {
+    return values.large_tablet !== undefined ? values.large_tablet : (values.tablet !== undefined ? values.tablet : values.phone);
+  }
+  if (deviceType === DeviceType.TABLET) {
+    return values.tablet !== undefined ? values.tablet : values.phone;
+  }
+  return values.phone;
+}
+

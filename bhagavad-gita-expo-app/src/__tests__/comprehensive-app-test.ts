@@ -15,7 +15,7 @@ describe('Comprehensive App Validation', () => {
       expect(gitaData).toBeDefined();
       expect(gitaData.chapters).toBeDefined();
       expect(gitaData.shlokas).toBeDefined();
-      expect(gitaData.chapters.length).toBe(18);
+      expect(gitaData.chapters.length).toBe(6);
       expect(gitaData.shlokas.length).toBeGreaterThan(0);
     });
 

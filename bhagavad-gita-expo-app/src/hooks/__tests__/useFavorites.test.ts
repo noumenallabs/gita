@@ -11,7 +11,7 @@ const mockActions = {
 const mockState = {
   favorites: new Set(['2.47', '3.27']),
   isLoading: false,
-  error: null,
+  error: null as string | null,
 };
 
 jest.mock('../../context/AppContext', () => ({
@@ -63,6 +63,9 @@ describe('useFavorites', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockState.favorites = new Set(['2.47', '3.27']);
+    mockState.isLoading = false;
+    mockState.error = null;
   });
 
   describe('useFavorites hook', () => {
@@ -187,17 +190,7 @@ describe('useFavorites', () => {
 
     it('should handle empty favorites', () => {
       // Mock empty favorites
-      const emptyMockState = {
-        ...mockState,
-        favorites: new Set<string>(),
-      };
-
-      jest.doMock('../../context/AppContext', () => ({
-        useAppContext: () => ({
-          state: emptyMockState,
-          actions: mockActions,
-        }),
-      }));
+      mockState.favorites = new Set<string>();
 
       const { result } = renderHook(() => useFavoritesList(mockShlokas));
 
@@ -209,17 +202,7 @@ describe('useFavorites', () => {
 
   describe('Integration scenarios', () => {
     it('should handle loading state', () => {
-      const loadingMockState = {
-        ...mockState,
-        isLoading: true,
-      };
-
-      jest.doMock('../../context/AppContext', () => ({
-        useAppContext: () => ({
-          state: loadingMockState,
-          actions: mockActions,
-        }),
-      }));
+      mockState.isLoading = true;
 
       const { result } = renderHook(() => useFavorites());
 
@@ -227,17 +210,7 @@ describe('useFavorites', () => {
     });
 
     it('should handle error state', () => {
-      const errorMockState = {
-        ...mockState,
-        error: 'Failed to save favorites',
-      };
-
-      jest.doMock('../../context/AppContext', () => ({
-        useAppContext: () => ({
-          state: errorMockState,
-          actions: mockActions,
-        }),
-      }));
+      mockState.error = 'Failed to save favorites';
 
       const { result } = renderHook(() => useFavorites());
 

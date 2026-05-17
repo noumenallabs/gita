@@ -1,4 +1,5 @@
 import { Shloka } from '../types';
+import { shlokas as gitaShlokas } from '../data/gita-data';
 
 /**
  * Utility functions for managing daily shloka selection
@@ -8,17 +9,26 @@ import { Shloka } from '../types';
  * Get a deterministic shloka based on the current date
  * This ensures the same shloka is shown for the same date across all users
  */
-export function getDailyShloka(shlokas: Shloka[], date?: Date): Shloka {
-  const targetDate = date || new Date();
+export function getDailyShloka(shlokas?: Shloka[] | Date, date?: Date): Shloka {
+  let targetShlokas: Shloka[];
+  let targetDate: Date;
+
+  if (shlokas instanceof Date) {
+    targetDate = shlokas;
+    targetShlokas = gitaShlokas;
+  } else {
+    targetShlokas = (shlokas as Shloka[]) || gitaShlokas;
+    targetDate = date || new Date();
+  }
 
   // Create a deterministic seed based on the date
   const dateString = formatDateForSeed(targetDate);
   const seed = hashString(dateString);
 
   // Use the seed to select a shloka index
-  const index = seed % shlokas.length;
+  const index = seed % targetShlokas.length;
 
-  return shlokas[index];
+  return targetShlokas[index];
 }
 
 /**
@@ -68,24 +78,44 @@ export function getFormattedDate(date?: Date): string {
  * Get the next shloka that would be shown (for tomorrow)
  * Useful for testing the rotation logic
  */
-export function getNextDailyShloka(shlokas: Shloka[], date?: Date): Shloka {
-  const targetDate = date || new Date();
+export function getNextDailyShloka(shlokas?: Shloka[] | Date, date?: Date): Shloka {
+  let targetShlokas: Shloka[];
+  let targetDate: Date;
+
+  if (shlokas instanceof Date) {
+    targetDate = shlokas;
+    targetShlokas = gitaShlokas;
+  } else {
+    targetShlokas = (shlokas as Shloka[]) || gitaShlokas;
+    targetDate = date || new Date();
+  }
+
   const tomorrow = new Date(targetDate);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-  return getDailyShloka(shlokas, tomorrow);
+  return getDailyShloka(targetShlokas, tomorrow);
 }
 
 /**
  * Get the previous shloka that was shown (yesterday)
  * Useful for testing the rotation logic
  */
-export function getPreviousDailyShloka(shlokas: Shloka[], date?: Date): Shloka {
-  const targetDate = date || new Date();
+export function getPreviousDailyShloka(shlokas?: Shloka[] | Date, date?: Date): Shloka {
+  let targetShlokas: Shloka[];
+  let targetDate: Date;
+
+  if (shlokas instanceof Date) {
+    targetDate = shlokas;
+    targetShlokas = gitaShlokas;
+  } else {
+    targetShlokas = (shlokas as Shloka[]) || gitaShlokas;
+    targetDate = date || new Date();
+  }
+
   const yesterday = new Date(targetDate);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
-  return getDailyShloka(shlokas, yesterday);
+  return getDailyShloka(targetShlokas, yesterday);
 }
 
 /**

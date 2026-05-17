@@ -610,3 +610,9 @@ export const getDeviceSpecificTestingPlan = (): string => {
 - Quarterly: User testing with accessibility experts
 `;
 };
+
+// Validate that an element has proper accessibility settings (used in tests)
+export const validateAccessibility = (element: any): boolean => {
+  return !!(element && element.accessibilityLabel && element.accessibilityRole);
+};
+

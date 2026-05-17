@@ -317,8 +317,8 @@ export const createTheme = (
   fontSizePreference: FontSizePreferenceValue = FontSizePreference.MEDIUM
 ): Theme => {
   let colors = isDark ? DarkColors : Colors;
-  let gradients = isDark ? DarkGradients : Gradients;
-  let shadows = isDark ? DarkShadows : Shadows;
+  const gradients = isDark ? DarkGradients : Gradients;
+  const shadows = isDark ? DarkShadows : Shadows;
 
   if (isHighContrast) {
     colors = {

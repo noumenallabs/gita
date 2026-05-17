@@ -1,0 +1,19 @@
+0 verbose cli /Users/M338688/.nvm/versions/node/v24.1.0/bin/node /opt/homebrew/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.6.0
+2 info using node@v24.1.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/M338688/Downloads/gitaapp/bhagavad-gita-expo-app/.npmrc
+5 warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+6 silly config load:file:/Users/M338688/Downloads/gitaapp/bhagavad-gita-expo-app/.home/.npmrc
+7 silly config load:file:/opt/homebrew/etc/npmrc
+8 verbose title npm exec expo export
+9 verbose argv "exec" "--" "expo" "export"
+10 verbose logfile logs-max:10 dir:/Users/M338688/Downloads/gitaapp/bhagavad-gita-expo-app/.home/.npm/_logs/2026-05-17T11_47_14_580Z-
+11 verbose logfile /Users/M338688/Downloads/gitaapp/bhagavad-gita-expo-app/.home/.npm/_logs/2026-05-17T11_47_14_580Z-debug-0.log
+12 silly logfile done cleaning log files
+13 verbose cwd /Users/M338688/Downloads/gitaapp/bhagavad-gita-expo-app
+14 verbose os Darwin 25.4.0
+15 verbose node v24.1.0
+16 verbose npm  v11.6.0
+17 verbose exit 0
+18 info ok

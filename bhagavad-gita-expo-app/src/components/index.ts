@@ -1,27 +1,7 @@
-export { AppHeader, type AppHeaderProps } from './AppHeader';
-export { AppBackground, type AppBackgroundProps } from './AppBackground';
 export { GitaLogo, type GitaLogoProps } from './GitaLogo';
 export { ShlokaCard, type ShlokaCardProps } from './ShlokaCard';
 export { ChapterCard, type ChapterCardProps } from './ChapterCard';
-export { SearchBar, type SearchBarProps } from './SearchBar';
-export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
-export { HighlightedText } from './HighlightedText';
-export { SplashScreen } from './SplashScreen';
-export { LoadingSplashScreen } from './LoadingSplashScreen';
-export { EnhancedSplashScreen } from './EnhancedSplashScreen';
-export { NativeMatchingSplash } from './NativeMatchingSplash';
 export { DesignedLoadingIndicator } from './DesignedLoadingIndicator';
-export { AppWithSplash } from './AppWithSplash';
-export { SimpleSplashWrapper } from './SimpleSplashWrapper';
-export { SeamlessSplashWrapper } from './SeamlessSplashWrapper';
-export { BlockingSplashWrapper } from './BlockingSplashWrapper';
-export {
-  AnimatedPage,
-  FadeInPage,
-  SlideInPage,
-  ScaleInPage,
-  type AnimatedPageProps,
-} from './AnimatedPage';
 export { AccessibilitySettings, type AccessibilitySettingsProps } from './AccessibilitySettings';
 export { ErrorBoundary } from './ErrorBoundary';
 export {
@@ -33,4 +13,15 @@ export {
   SkeletonVerseCard,
   SkeletonChapterCard,
 } from './Skeleton';
+export { SacredBackground, OrnamentalDivider } from './SacredBackground';
+export { StreakBar } from './StreakBar';
+export { ProgressBar } from './ProgressBar';
+export { ActionButton } from './ActionButton';
+export { TranslationTabs } from './TranslationTabs';
+export { VerseCarousel } from './VerseCarousel';
+export { ChapterPill } from './ChapterPill';
+export { StatsGrid } from './StatsGrid';
+export { SectionHeader } from './SectionHeader';
+export { AnimatedIcon } from './AnimatedIcon';
+export { FrostedNavBar } from './FrostedNavBar';
 export * from './ui';

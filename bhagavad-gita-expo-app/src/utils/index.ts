@@ -150,7 +150,6 @@ export {
   clearTextMeasurementCache,
   optimizeForScreenReader,
   truncateText,
-  type TextRenderingConfig,
 } from './textOptimization';
 
 // Re-export types for convenience

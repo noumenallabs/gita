@@ -18,6 +18,9 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
+jest.mock('@expo/vector-icons/build/Ionicons', () => 'Ionicons');
+
+
 // Mock React Native Reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
@@ -52,11 +55,15 @@ jest.mock('react-native/Libraries/Animated/Animated', () => {
 });
 
 // Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
+const mockAsyncStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
+};
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  ...mockAsyncStorage,
+  default: mockAsyncStorage,
 }));
 
 // Silence console warnings during tests

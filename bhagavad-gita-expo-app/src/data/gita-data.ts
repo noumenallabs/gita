@@ -231,3 +231,9 @@ export const shlokas: Shloka[] = [
     },
   },
 ];
+
+export const gitaData = {
+  chapters,
+  shlokas,
+};
+

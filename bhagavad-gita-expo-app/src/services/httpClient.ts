@@ -165,7 +165,7 @@ export function createHttpClient(config: HttpClientConfig) {
           }
 
           if (
-            error instanceof DOMException &&
+            error instanceof Error &&
             error.name === 'AbortError'
           ) {
             lastError = new TimeoutError();

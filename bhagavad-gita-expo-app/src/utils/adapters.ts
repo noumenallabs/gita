@@ -5,6 +5,7 @@ import type {
   ApiVerseListItem,
 } from '../types/api';
 import type { Chapter, Shloka, Commentary } from '../types';
+import { shlokas as localShlokas } from '../data/gita-data';
 
 const TRANSLATOR_NAMES: Record<string, string> = {
   tej: 'Swami Tejomayananda',
@@ -82,50 +83,56 @@ function parseTranslationKey(key: string): {
 }
 
 export function apiVerseToShloka(apiVerse: ApiVerse): Shloka {
+  const localVerse = localShlokas.find(s => s.chapter === apiVerse.chapter_number && s.verse === apiVerse.verse_number);
   const commentaries: Commentary[] = [];
+  let fallbackWordByWord = apiVerse.word_meanings ?? localVerse?.translations.wordByWord ?? '';
+  let fallbackCommentary = localVerse?.translations.commentary ?? '';
 
   for (const [key, body] of Object.entries(apiVerse.translations ?? {})) {
     if (!body) continue;
 
+    const lowerKey = key.toLowerCase();
+    
+    // Extract word-by-word if found in translations
+    if (lowerKey.endsWith('_wbw') || lowerKey.endsWith('_wb') || lowerKey.includes('word')) {
+      if (!fallbackWordByWord) fallbackWordByWord = body;
+      continue; // typically don't add wbw to commentaries list
+    }
+
+    const isCommentary = lowerKey.endsWith('_co') || lowerKey.includes('commentary');
+    if (isCommentary && !fallbackCommentary) {
+      fallbackCommentary = body;
+    }
+
     const { authorKey } = parseTranslationKey(key);
-    const existing = commentaries.find((c) => c.authorKey === authorKey);
+    let existing = commentaries.find((c) => c.authorKey === authorKey);
 
-    if (existing) {
-      if (key.endsWith('_en') && !key.includes('Commentary')) {
-        existing.translations.english = body;
-      } else if (key.endsWith('_hi') && !key.includes('Commentary')) {
-        existing.translations.hindi = body;
-      } else if (key.includes('Commentary') && key.endsWith('_en')) {
-        existing.translations.englishCommentary = body;
-      } else if (key.includes('Commentary') && key.endsWith('_hi')) {
-        existing.translations.hindiCommentary = body;
-      } else if (key.includes('Commentary') && key.endsWith('_sa')) {
-        existing.translations.sanskritCommentary = body;
-      } else if (key.endsWith('_en')) {
-        existing.translations.english = body;
-      }
-    } else {
-      const translations: Commentary['translations'] = {};
-      if (key.endsWith('_en') && !key.includes('Commentary')) {
-        translations.english = body;
-      } else if (key.endsWith('_hi') && !key.includes('Commentary')) {
-        translations.hindi = body;
-      } else if (key.includes('Commentary') && key.endsWith('_en')) {
-        translations.englishCommentary = body;
-      } else if (key.includes('Commentary') && key.endsWith('_hi')) {
-        translations.hindiCommentary = body;
-      } else if (key.includes('Commentary') && key.endsWith('_sa')) {
-        translations.sanskritCommentary = body;
-      } else {
-        translations.english = body;
-      }
-
-      commentaries.push({
+    if (!existing) {
+      existing = {
         authorKey,
         author: TRANSLATOR_NAMES[authorKey] ?? authorKey,
         displayName: TRANSLATOR_DISPLAY_NAMES[authorKey] ?? authorKey,
-        translations,
-      });
+        translations: {},
+      };
+      commentaries.push(existing);
+    }
+
+    if (isCommentary) {
+      if (lowerKey.includes('_hi') || lowerKey.includes('hindi')) {
+        existing.translations.hindiCommentary = body;
+      } else if (lowerKey.includes('_sa') || lowerKey.includes('sanskrit')) {
+        existing.translations.sanskritCommentary = body;
+      } else {
+        existing.translations.englishCommentary = body;
+      }
+    } else {
+      if (lowerKey.includes('_hi') || lowerKey.includes('hindi')) {
+        existing.translations.hindi = body;
+      } else if (lowerKey.includes('_sa') || lowerKey.includes('sanskrit')) {
+        // Sanskrit translation
+      } else {
+        existing.translations.english = body;
+      }
     }
   }
 
@@ -145,8 +152,8 @@ export function apiVerseToShloka(apiVerse: ApiVerse): Shloka {
     translations: {
       english: findTranslation(['prabhu_en', 'siva_en', 'tej_en', 'purohit_en', 'gambir_en', 'adi_en']),
       hindi: findTranslation(['rams_hi', 'tej_hi']),
-      wordByWord: '',
-      commentary: findTranslation(['siva_en_Commentary', 'prabhu_en_Commentary', 'chinmay_hi_Commentary']),
+      wordByWord: fallbackWordByWord || 'Word-by-word meaning is not available for this verse.',
+      commentary: fallbackCommentary || 'Commentary is not available for this verse.',
     },
     commentaries: commentaries.length > 0 ? commentaries : undefined,
   };

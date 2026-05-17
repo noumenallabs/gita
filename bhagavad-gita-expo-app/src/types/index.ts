@@ -82,6 +82,7 @@ export interface SearchResult {
   matchType: 'sanskrit' | 'transliteration' | 'english' | 'wordByWord' | 'commentary';
   matchText: string;
   score: number;
+  matches?: string[];
 }
 
 export interface SearchIndex {

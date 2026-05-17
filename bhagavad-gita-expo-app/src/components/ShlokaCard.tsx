@@ -441,29 +441,31 @@ export const ShlokaCard: React.FC<ShlokaCardProps> = memo(
               },
             ]}
           >
-            <View style={styles.sectionContent}>
-              <Text
-                style={styles.sanskritText}
-                accessible={true}
-                accessibilityLabel={`Sanskrit verse: ${shloka.transliteration}`}
-              >
-                {shloka.sanskrit}
-              </Text>
+            {isExpanded && (
+              <View style={styles.sectionContent}>
+                <Text
+                  style={styles.sanskritText}
+                  accessible={true}
+                  accessibilityLabel={`Sanskrit verse: ${shloka.transliteration}`}
+                >
+                  {shloka.sanskrit}
+                </Text>
 
-              <View style={styles.divider} />
+                <View style={styles.divider} />
 
-              <Text style={styles.sectionSubtitle}>Transliteration</Text>
-              <Text
-                style={styles.transliterationText}
-                {...getAccessibilityProps(
-                  `Transliteration: ${shloka.transliteration}`,
-                  'Pronunciation guide for Sanskrit text',
-                  'text'
-                )}
-              >
-                {shloka.transliteration}
-              </Text>
-            </View>
+                <Text style={styles.sectionSubtitle}>Transliteration</Text>
+                <Text
+                  style={styles.transliterationText}
+                  {...getAccessibilityProps(
+                    `Transliteration: ${shloka.transliteration}`,
+                    'Pronunciation guide for Sanskrit text',
+                    'text'
+                  )}
+                >
+                  {shloka.transliteration}
+                </Text>
+              </View>
+            )}
           </Animated.View>
         </View>
       );

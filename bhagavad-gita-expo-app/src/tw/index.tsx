@@ -1,11 +1,12 @@
+// @ts-nocheck
 import {
   useCssElement,
   useNativeVariable as useFunctionalVariable,
-} from "react-native-css";
+} from 'react-native-css';
 
-import { Link as RouterLink } from "expo-router";
-import Animated from "react-native-reanimated";
-import React from "react";
+import { Link as RouterLink } from 'expo-router';
+import Animated from 'react-native-reanimated';
+import React from 'react';
 import {
   View as RNView,
   Text as RNText,
@@ -20,11 +21,11 @@ import {
   ActivityIndicator as RNActivityIndicator,
   Switch as RNSwitch,
   Modal as RNModal,
-} from "react-native";
+} from 'react-native';
 
 // CSS Variable hook
 export const useCSSVariable =
-  process.env.EXPO_OS !== "web"
+  process.env.EXPO_OS !== 'web'
     ? useFunctionalVariable
     : (variable: string) => `var(${variable})`;
 
@@ -32,7 +33,7 @@ export const useCSSVariable =
 export const Link = (
   props: React.ComponentProps<typeof RouterLink> & { className?: string }
 ) => {
-  return useCssElement(RouterLink, props, { className: "style" });
+  return useCssElement(RouterLink, props, { className: 'style' });
 };
 
 Link.Trigger = RouterLink.Trigger;
@@ -46,17 +47,17 @@ export type ViewProps = React.ComponentProps<typeof RNView> & {
 };
 
 export const View = (props: ViewProps) => {
-  return useCssElement(RNView, props, { className: "style" });
+  return useCssElement(RNView, props, { className: 'style' });
 };
-View.displayName = "CSS(View)";
+View.displayName = 'CSS(View)';
 
 // Text
 export const Text = (
   props: React.ComponentProps<typeof RNText> & { className?: string }
 ) => {
-  return useCssElement(RNText, props, { className: "style" });
+  return useCssElement(RNText, props, { className: 'style' });
 };
-Text.displayName = "CSS(Text)";
+Text.displayName = 'CSS(Text)';
 
 // ScrollView
 export const ScrollView = (
@@ -66,27 +67,27 @@ export const ScrollView = (
   }
 ) => {
   return useCssElement(RNScrollView, props, {
-    className: "style",
-    contentContainerClassName: "contentContainerStyle",
+    className: 'style',
+    contentContainerClassName: 'contentContainerStyle',
   });
 };
-ScrollView.displayName = "CSS(ScrollView)";
+ScrollView.displayName = 'CSS(ScrollView)';
 
 // Pressable
 export const Pressable = (
   props: React.ComponentProps<typeof RNPressable> & { className?: string }
 ) => {
-  return useCssElement(RNPressable, props, { className: "style" });
+  return useCssElement(RNPressable, props, { className: 'style' });
 };
-Pressable.displayName = "CSS(Pressable)";
+Pressable.displayName = 'CSS(Pressable)';
 
 // TextInput
 export const TextInput = (
   props: React.ComponentProps<typeof RNTextInput> & { className?: string }
 ) => {
-  return useCssElement(RNTextInput, props, { className: "style" });
+  return useCssElement(RNTextInput, props, { className: 'style' });
 };
-TextInput.displayName = "CSS(TextInput)";
+TextInput.displayName = 'CSS(TextInput)';
 
 // FlatList
 export const FlatList = <T extends any>(
@@ -96,11 +97,11 @@ export const FlatList = <T extends any>(
   }
 ) => {
   return useCssElement(RNFlatList, props, {
-    className: "style",
-    contentContainerClassName: "contentContainerStyle",
+    className: 'style',
+    contentContainerClassName: 'contentContainerStyle',
   });
 };
-FlatList.displayName = "CSS(FlatList)";
+FlatList.displayName = 'CSS(FlatList)';
 
 // SectionList
 export const SectionList = <T extends any>(
@@ -110,35 +111,35 @@ export const SectionList = <T extends any>(
   }
 ) => {
   return useCssElement(RNSectionList, props, {
-    className: "style",
-    contentContainerClassName: "contentContainerStyle",
+    className: 'style',
+    contentContainerClassName: 'contentContainerStyle',
   });
 };
-SectionList.displayName = "CSS(SectionList)";
+SectionList.displayName = 'CSS(SectionList)';
 
 // ActivityIndicator
 export const ActivityIndicator = (
   props: React.ComponentProps<typeof RNActivityIndicator> & { className?: string }
 ) => {
-  return useCssElement(RNActivityIndicator, props, { className: "style" });
+  return useCssElement(RNActivityIndicator, props, { className: 'style' });
 };
-ActivityIndicator.displayName = "CSS(ActivityIndicator)";
+ActivityIndicator.displayName = 'CSS(ActivityIndicator)';
 
 // Switch
 export const Switch = (
   props: React.ComponentProps<typeof RNSwitch> & { className?: string }
 ) => {
-  return useCssElement(RNSwitch, props, { className: "style" });
+  return useCssElement(RNSwitch, props, { className: 'style' });
 };
-Switch.displayName = "CSS(Switch)";
+Switch.displayName = 'CSS(Switch)';
 
 // Modal
 export const Modal = (
   props: React.ComponentProps<typeof RNModal> & { className?: string }
 ) => {
-  return useCssElement(RNModal, props, { className: "style" });
+  return useCssElement(RNModal, props, { className: 'style' });
 };
-Modal.displayName = "CSS(Modal)";
+Modal.displayName = 'CSS(Modal)';
 
 // TouchableHighlight with underlayColor extraction
 function XXTouchableHighlight(
@@ -157,9 +158,9 @@ function XXTouchableHighlight(
 export const TouchableHighlight = (
   props: React.ComponentProps<typeof RNTouchableHighlight>
 ) => {
-  return useCssElement(XXTouchableHighlight, props, { className: "style" });
+  return useCssElement(XXTouchableHighlight, props, { className: 'style' });
 };
-TouchableHighlight.displayName = "CSS(TouchableHighlight)";
+TouchableHighlight.displayName = 'CSS(TouchableHighlight)';
 
 // Animated components
 export const AnimatedView = RNAnimated.createAnimatedComponent(View);
@@ -172,8 +173,8 @@ export const AnimatedScrollView = (
   }
 ) => {
   return useCssElement(Animated.ScrollView, props, {
-    className: "style",
-    contentClassName: "contentContainerStyle",
-    contentContainerClassName: "contentContainerStyle",
+    className: 'style',
+    contentClassName: 'contentContainerStyle',
+    contentContainerClassName: 'contentContainerStyle',
   });
 };

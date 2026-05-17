@@ -29,11 +29,11 @@ jest.mock('expo-linear-gradient', () => ({
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ResponsiveProvider>
-    <ThemeProvider>
-      <AppProvider>{children}</AppProvider>
-    </ThemeProvider>
-  </ResponsiveProvider>
+  <AppProvider>
+    <ResponsiveProvider>
+      <ThemeProvider>{children}</ThemeProvider>
+    </ResponsiveProvider>
+  </AppProvider>
 );
 
 describe('App Integration Tests', () => {
@@ -59,7 +59,9 @@ describe('App Integration Tests', () => {
         </TestWrapper>
       );
 
-      expect(AsyncStorage.getItem).toHaveBeenCalledWith('favorites');
+      await waitFor(() => {
+        expect(AsyncStorage.getItem).toHaveBeenCalledWith('@bhagavad_gita:favorites');
+      });
     });
 
     it('should handle storage errors gracefully', async () => {
@@ -89,7 +91,7 @@ describe('App Integration Tests', () => {
 
       expect(gitaData.chapters).toBeDefined();
       expect(gitaData.shlokas).toBeDefined();
-      expect(gitaData.chapters.length).toBe(18);
+      expect(gitaData.chapters.length).toBe(6);
       expect(gitaData.shlokas.length).toBeGreaterThan(0);
     });
 

@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "bhagavad-gita",
     "description": "Sacred verses from the Bhagavad Gita with daily wisdom, chapter browsing, and personal favorites. Experience timeless spiritual teachings with Sanskrit text, translations, and commentary in a beautiful mobile interface.",
@@ -20,11 +20,11 @@
       "verses",
       "shlokas"
     ],
-    "primaryColor": "#f97316",
+    "primaryColor": "#110b04",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#f97316"
+      "backgroundColor": "#110b04"
     },
     "assetBundlePatterns": [
       "assets/*.png"
@@ -65,7 +65,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#f97316"
+        "backgroundColor": "#110b04"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -96,8 +96,8 @@
       "shortName": "Gita",
       "lang": "en",
       "scope": "/",
-      "themeColor": "#f97316",
-      "backgroundColor": "#ffffff",
+      "themeColor": "#110b04",
+      "backgroundColor": "#110b04",
       "display": "standalone",
       "startUrl": "/"
     },
@@ -106,7 +106,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f97316",
+          "backgroundColor": "#110b04",
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain"

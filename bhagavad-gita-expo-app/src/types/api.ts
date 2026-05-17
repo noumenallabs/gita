@@ -16,6 +16,7 @@ export interface ApiVerse {
   verse_number: number;
   slok: string;
   transliteration: string | null;
+  word_meanings?: string;
   translations: Record<string, string>;
 }
 

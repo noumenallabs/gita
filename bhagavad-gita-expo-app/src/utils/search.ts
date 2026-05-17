@@ -109,11 +109,37 @@ function extractKeywords(text: string): string[] {
  * Searches through shlokas using the search index
  */
 export function searchShlokas(
-  query: string,
-  shlokas: Shloka[],
-  searchIndex: SearchIndex[],
+  queryOrShlokas: string | Shloka[] | undefined | null,
+  shlokasOrQuery: Shloka[] | string,
+  searchIndex?: SearchIndex[],
   maxResults: number = 20
 ): SearchResult[] {
+  let query: string;
+  let shlokas: Shloka[];
+  let finalSearchIndex: SearchIndex[];
+
+  if (Array.isArray(queryOrShlokas) || queryOrShlokas === undefined || queryOrShlokas === null) {
+    // Called as: searchShlokas(shlokas, query)
+    shlokas = (queryOrShlokas || []) as Shloka[];
+    query = shlokasOrQuery as string;
+    finalSearchIndex = createSearchIndex(shlokas);
+  } else {
+    // Called as: searchShlokas(query, shlokas, searchIndex, maxResults)
+    query = queryOrShlokas;
+    shlokas = shlokasOrQuery as Shloka[];
+    finalSearchIndex = searchIndex || createSearchIndex(shlokas);
+  }
+
+  // Gracefully handle undefined or empty shlokas array
+  if (!shlokas || !Array.isArray(shlokas) || shlokas.length === 0) {
+    return [];
+  }
+
+  // Gracefully handle invalid query type
+  if (typeof query !== 'string') {
+    return [];
+  }
+
   // Validate query
   const validation = validateSearchQuery(query);
   if (!validation.isValid) {
@@ -129,7 +155,7 @@ export function searchShlokas(
   const queryTerms = normalizedQuery.split(/\s+/).filter(term => term.length > 0);
 
   shlokas.forEach((shloka, index) => {
-    const searchIndexItem = searchIndex[index];
+    const searchIndexItem = finalSearchIndex[index];
     let bestScore = 0;
     let bestMatchType: SearchResult['matchType'] = 'english';
     let bestMatchText = '';
@@ -153,7 +179,7 @@ export function searchShlokas(
       },
     ];
 
-    let fieldScores: Array<{
+    const fieldScores: Array<{
       score: number;
       type: SearchResult['matchType'];
       text: string;
@@ -193,17 +219,27 @@ export function searchShlokas(
 
       // Boost score for exact phrase matches
       if (normalizedQuery.length > 3) {
+        const cleanQuery = stripDiacritics(normalizedQuery);
         for (const field of searchFields) {
-          if (field.text.toLowerCase().includes(normalizedQuery)) {
+          const cleanFieldText = stripDiacritics(field.text.toLowerCase());
+          if (cleanFieldText.includes(cleanQuery)) {
             bestScore += 1.0 * field.weight;
             break;
           }
         }
       }
+    }
 
-      // Boost score for chapter/verse number matches
-      const chapterVerseBoost = calculateChapterVerseBoost(queryTerms, shloka);
-      bestScore += chapterVerseBoost;
+    // Boost score for chapter/verse number matches independent of text matching
+    const chapterVerseBoost = calculateChapterVerseBoost(queryTerms, shloka);
+    if (chapterVerseBoost > 0) {
+      if (bestScore === 0) {
+        bestScore = chapterVerseBoost * 4.0;
+        bestMatchType = 'english';
+        bestMatchText = `Chapter ${shloka.chapter}, Verse ${shloka.verse}`;
+      } else {
+        bestScore += chapterVerseBoost;
+      }
     }
 
     // Only include results with meaningful scores
@@ -213,6 +249,7 @@ export function searchShlokas(
         matchType: bestMatchType,
         matchText: bestMatchText,
         score: Math.min(bestScore, 10), // Cap score at 10 for normalization
+        matches: queryTerms,
       });
     }
   });
@@ -225,20 +262,22 @@ export function searchShlokas(
  * Calculates search score for a specific field
  */
 function calculateFieldScore(query: string, queryTerms: string[], fieldText: string): number {
-  const normalizedField = fieldText.toLowerCase();
+  const cleanField = stripDiacritics(fieldText.toLowerCase());
+  const cleanQuery = stripDiacritics(query);
   let score = 0;
 
   // Exact phrase match (highest score)
-  if (normalizedField.includes(query)) {
+  if (cleanField.includes(cleanQuery)) {
     score += 2.0;
   }
 
   // Individual term matches
   for (const term of queryTerms) {
-    if (normalizedField.includes(term)) {
+    const cleanTerm = stripDiacritics(term);
+    if (cleanField.includes(cleanTerm)) {
       // Boost score for whole word matches
-      const wordRegex = new RegExp(`\\b${term}\\b`, 'i');
-      if (wordRegex.test(normalizedField)) {
+      const wordRegex = new RegExp(`\\b${cleanTerm}\\b`, 'i');
+      if (wordRegex.test(cleanField)) {
         score += 1.0;
       } else {
         score += 0.5;
@@ -247,8 +286,9 @@ function calculateFieldScore(query: string, queryTerms: string[], fieldText: str
   }
 
   // Boost score based on term density
+  const cleanTerms = queryTerms.map(term => stripDiacritics(term));
   const termDensity =
-    queryTerms.filter(term => normalizedField.includes(term)).length / queryTerms.length;
+    cleanTerms.filter(cleanTerm => cleanField.includes(cleanTerm)).length / queryTerms.length;
   score *= 1 + termDensity;
 
   return score;
@@ -273,8 +313,9 @@ function calculateKeywordScore(queryTerms: string[], keywords: string[]): number
  * Extracts relevant text snippet around the match
  */
 function extractMatchText(text: string, query: string, maxLength: number = 150): string {
-  const normalizedText = text.toLowerCase();
-  const queryIndex = normalizedText.indexOf(query.toLowerCase());
+  const cleanText = stripDiacritics(text.toLowerCase());
+  const cleanQuery = stripDiacritics(query.toLowerCase());
+  const queryIndex = cleanText.indexOf(cleanQuery);
 
   if (queryIndex === -1) {
     // If exact query not found, return beginning of text
@@ -461,7 +502,7 @@ export function advancedSearch(
   }
 
   // Perform search
-  let results = searchShlokas(query, filteredShlokas, filteredIndex, maxResults * 2);
+  const results = searchShlokas(query, filteredShlokas, filteredIndex, maxResults * 2);
 
   // Filter by included types (this would require modifying the search to track which types matched)
   // For now, we'll keep all results
@@ -550,3 +591,25 @@ export function createDebouncedSearch(
     }, delay);
   };
 }
+
+/**
+ * Standard utility to strip IAST diacritical markings for ASCII search compatibility
+ */
+export function stripDiacritics(str: string): string {
+  return str
+    .replace(/[āā]/gi, 'a')
+    .replace(/[īī]/gi, 'i')
+    .replace(/[ūū]/gi, 'u')
+    .replace(/[ṛṛ]/gi, 'r')
+    .replace(/[ḷḷ]/gi, 'l')
+    .replace(/[ṅṅ]/gi, 'n')
+    .replace(/[ññ]/gi, 'n')
+    .replace(/[ṭṭ]/gi, 't')
+    .replace(/[ḍḍ]/gi, 'd')
+    .replace(/[ṇṇ]/gi, 'n')
+    .replace(/[śś]/gi, 's')
+    .replace(/[ṣṣ]/gi, 's')
+    .replace(/[ḥḥ]/gi, 'h')
+    .replace(/[ṁṁ]/gi, 'm');
+}
+

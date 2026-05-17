@@ -9,49 +9,53 @@ const MockThemeProvider = ({ children }: { children: React.ReactNode }) => <>{ch
 const MockResponsiveProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 // Mock hooks
-jest.mock('../../context/ThemeContext', () => ({
-  useTheme: () => ({
-    theme: {
-      colors: {
-        primary: { 200: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
-        gray: {
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          400: '#9ca3af',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-        },
+jest.mock('../../context/ResponsiveContext', () => {
+  const theme = {
+    colors: {
+      primary: { 200: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
+      gray: {
+        100: '#f3f4f6',
+        200: '#e5e7eb',
+        400: '#9ca3af',
+        600: '#4b5563',
+        700: '#374151',
+        800: '#1f2937',
       },
-      spacing: { xs: 4, sm: 8, md: 16, lg: 24 },
-      typography: {
-        caption: { fontSize: 12 },
-        label: { fontSize: 14 },
-        body1: { fontSize: 16 },
-        body2: { fontSize: 14 },
-        h5: { fontSize: 20 },
-        h6: { fontSize: 18 },
-        sanskrit: { fontSize: 18 },
-        transliteration: { fontSize: 16 },
-      },
-      borderRadius: { md: 8, xl: 16 },
-      shadows: { lg: { shadowOpacity: 0.1 } },
-      touchTargets: { medium: 44, large: 48 },
-      gradients: { primary: ['#f59e0b', '#d97706'] },
-      isDark: false,
     },
-  }),
-}));
+    spacing: { xs: 4, sm: 8, md: 16, lg: 24 },
+    typography: {
+      caption: { fontSize: 12 },
+      label: { fontSize: 14 },
+      body1: { fontSize: 16 },
+      body2: { fontSize: 14 },
+      h5: { fontSize: 20 },
+      h6: { fontSize: 18 },
+      sanskrit: { fontSize: 18 },
+      transliteration: { fontSize: 16 },
+    },
+    borderRadius: { md: 8, xl: 16 },
+    shadows: { lg: { shadowOpacity: 0.1 } },
+    touchTargets: { medium: 44, large: 48 },
+    gradients: { primary: ['#f59e0b', '#d97706'] },
+    isDark: false,
+  };
 
-jest.mock('../../context/ResponsiveContext', () => ({
-  useDeviceInfo: () => ({
-    isTablet: false,
-    screenWidth: 375,
-  }),
-  useAccessibility: () => ({
-    reduceMotion: false,
-  }),
-}));
+  return {
+    useDeviceInfo: () => ({
+      isTablet: false,
+      screenWidth: 375,
+    }),
+    useAccessibility: () => ({
+      reduceMotion: false,
+    }),
+    useTheme: () => theme,
+    useResponsive: () => ({
+      state: {
+        theme,
+      },
+    }),
+  };
+});
 
 jest.mock('../../utils/responsive', () => ({
   getLayoutDimensions: () => ({
@@ -248,7 +252,7 @@ describe('ShlokaCard', () => {
   });
 
   it('should close translation selector when backdrop is pressed', async () => {
-    const { getByText, queryByText } = render(
+    const { getByText, queryByText, getByLabelText } = render(
       <MockThemeProvider>
         <MockResponsiveProvider>
           <ShlokaCard {...defaultProps} />
@@ -265,7 +269,7 @@ describe('ShlokaCard', () => {
     });
 
     // Press backdrop (close button)
-    const closeButton = getByText('Close translation selector');
+    const closeButton = getByLabelText('Close translation selector');
     fireEvent.press(closeButton);
 
     // Modal should close

@@ -8,7 +8,8 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "EXPO_PUBLIC_API_URL": "https://gita-api.viruhemanth.workers.dev/api"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -21,7 +22,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://gita-api.viruhemanth.workers.dev/api"
       },
       "ios": {
         "resourceClass": "m-medium",
@@ -34,7 +36,8 @@
     },
     "production": {
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://gita-api.viruhemanth.workers.dev/api"
       },
       "ios": {
         "resourceClass": "m-medium",
@@ -49,6 +52,7 @@
       "extends": "production",
       "env": {
         "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://gita-api.viruhemanth.workers.dev/api",
         "EXPO_PUBLIC_STORE_TARGET": "samsung"
       },
       "android": {
